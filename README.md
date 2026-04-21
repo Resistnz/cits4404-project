@@ -20,9 +20,9 @@ im thinkin we have like:
         buy/sell
 
 
-where trading engine is something we do research on and make e.g. SVR
-our language is just a bunch of weights (numbers)
-dimension will be however many indicators we pick
+- trading engine is something we do research on and make e.g. SVR
+- our language is just a bunch of weights (numbers)
+- dimension will be however many indicators we pick
 
 pros:
  - probably relatively smooth solution space
@@ -39,6 +39,7 @@ our language becomes more complicated where we actually build a bot, e.g. practi
 pros:
  - more focused on optimisation
  - could be cool 
+ 
 cons:
  - solution space gets all fucked up and discontinuous
  - probably wouldn't even work that well BUT it might
