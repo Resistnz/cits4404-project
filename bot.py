@@ -1,41 +1,62 @@
-"""
-im thinkin we have like:
+from enum import Enum
 
-                                optimisation alg.
+# should put this in its own file lowkey but u get the idea
+class Optimiser:
+    def __init__(self):
+        print("im gonna optimise so hard")
 
-                                    |
-                                    |  (weightings)
-                                    V
+        self.best_solution = dict()
+
+    # do a tick
+    def update(self) -> None:
+        ... # these are so cool who needs pass
+
+    # test a solution
+    def objective_function(self, param1, param2) -> float: 
+        return 0
     
-      trading engine   <----    weighted indicators  < ---- indicators (ema, max, min etc)
+    def termination_criteria_reached(self) -> bool:
+        return False
+    
+    # could have a specific Solution subclass that holds all the parameters if you want
+    
+# override stuff, makes it ez to plug in other ones
+class SpecificOptimiser(Optimiser):
+    ...
 
-            |
-            |
-            V
 
-        buy/sell
+class Signal(Enum):
+    BUY = 1
+    SELL = 2
+    HOLD = 3
+
+class TradingEngine:
+    def __init__(self):
+        print(" tell me what to do and ill do it")
+
+    # main engine logic go in here
+    # bro knows nothing other than the indicators it gets
+    def detect_signal(self, indicator1, indicator2) -> Signal:
+        # e.g. if indicator1 > indicator 2 then BUY pls
+
+        return Signal.BUY
+    
 
 
-where trading engine is something we do research on and make e.g. SVR
-our language is just a bunch of weights (numbers)
+# idk do stuff
+optimiser = SpecificOptimiser()
+engine = TradingEngine()
 
-pros:
- - probably relatively smooth solution space
- - ez pz to figure out our hypothesis space/language cause its just all numbers
+while not optimiser.termination_criteria_reached():
+    optimiser.update()
 
-cons:
- - we gotta figure out some trading engine (proabbly still not hard)
+# we would have a good solution here now, this is after its been trained and we tryna make money
+while True:
+    signal = engine.detect_signal(*optimiser.best_solution)
 
-_______________________________________________ OR:
-
-we full send it and get the optimisation alg. to build a bot entirely
-our language becomes more complicated where we actually build a bot, e.g. practice test Q1
-
-pros:
- - more focused on optimisation
- - could be cool 
-cons:
- - solution space gets all fucked up and discontinuous
- - probably wouldn't even work that well BUT it might
-
-""" 
+    if signal == Signal.BUY:
+        # simulate a buy
+        ...
+    elif signal == Signal.SELL:
+        # simulate a sell
+        ...
