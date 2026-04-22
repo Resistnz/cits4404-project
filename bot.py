@@ -3,20 +3,22 @@ from enum import Enum
 # should put this in its own file lowkey but u get the idea
 class Optimiser:
     def __init__(self):
-        print("im gonna optimise so hard")
-
-        self.best_solution = dict()
+        self.best_solution = list()
 
     # do a tick
     def update(self) -> None:
         ... # these are so cool who needs pass
 
-    # test a solution
+    # e.g. error of prediction of price at end of day
     def objective_function(self, param1, param2) -> float: 
         return 0
     
     def termination_criteria_reached(self) -> bool:
         return False
+    
+    def run(self):
+        while not self.termination_criteria_reached():
+            self.update()
     
     # could have a specific Solution subclass that holds all the parameters if you want
     
@@ -41,22 +43,25 @@ class TradingEngine:
 
         return Signal.BUY
     
+def main():
 
+    # idk do stuff
+    optimiser = SpecificOptimiser()
+    engine = TradingEngine()
 
-# idk do stuff
-optimiser = SpecificOptimiser()
-engine = TradingEngine()
+    while not optimiser.termination_criteria_reached():
+        optimiser.update()
 
-while not optimiser.termination_criteria_reached():
-    optimiser.update()
+    # we would have a good solution here now, this is after its been trained and we tryna make money
+    while True:
+        signal = engine.detect_signal(*optimiser.best_solution)
 
-# we would have a good solution here now, this is after its been trained and we tryna make money
-while True:
-    signal = engine.detect_signal(*optimiser.best_solution)
+        if signal == Signal.BUY:
+            # simulate a buy
+            ...
+        elif signal == Signal.SELL:
+            # simulate a sell
+            ...
 
-    if signal == Signal.BUY:
-        # simulate a buy
-        ...
-    elif signal == Signal.SELL:
-        # simulate a sell
-        ...
+if __name__ == "__main__":
+    main()
