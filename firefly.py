@@ -102,7 +102,8 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
         w = self.w_start - (self.w_start - self.w_end) * np.emath.logn(self.max_iterations, self.iteration) # Eq. 6
 
         # dynamic step size
-        c = np.pow(self.theta, self.D) * self.max_iterations * np.exp(-self.iteration/self.max_iterations) # Eq. 7
+        c = self.theta**self.D * self.max_iterations * np.exp(-self.iteration/self.max_iterations) # Eq. 7
+        #c = 1
 
         # check all firefly pairs? this is O(n^2) idk why the paper says its not
         for i in range(self.n):
@@ -114,16 +115,18 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
                 if intensities[j] < intensities[i]:
                     b = self.brightness(i, j)
                     
-                    move += b * (self.fireflies[j] - new_fireflies[i])
+                    move += b * (self.fireflies[j] - self.fireflies[i])
+
                     better_count += 1
 
-                    #new_fireflies[i] = new_fireflies[i] * w + b * (self.fireflies[j] - new_fireflies[i]) + self.a * c * d # Eq. 8
-                    #new_fireflies[i] = np.clip(new_fireflies[i], -5.12, 5.12)
-
             d = np.random.uniform(-1, 1, self.D)
+            random_step = self.a * c * d
 
-            #if better_count > 0:
-            new_fireflies[i] = w * new_fireflies[i] + move + self.a * c * d
+            if better_count > 0:
+                move /= better_count
+
+            new_fireflies[i] = w * new_fireflies[i] + move + random_step
+            new_fireflies[i] = np.clip(new_fireflies[i], -5.12, 5.12)
 
         self.fireflies = new_fireflies
 
@@ -133,8 +136,8 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
         print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
 
 # hyper parameters
-LIGHT_ABSORPTION = 0.1
-STEP_SIZE = 0.1
+LIGHT_ABSORPTION = 0.5
+STEP_SIZE = 0.01
 MAX_ITERATIONS = 1000
 MIN_BRIGHTNESS = 0.1
 TOLERANCE = 1e-10
@@ -142,9 +145,11 @@ TOLERANCE = 1e-10
 FUNCTION_KEY = "f12"
 
 #print("Original firefly algorithm:")
-#firefly = FireflyOptimiser(30, 30, light_absorption=LIGHT_ABSORPTION, step_size=STEP_SIZE, max_iterations=MAX_ITERATIONS, function_key=FUNCTION_KEY, tolerance=TOLERANCE)
-#firefly.run()
+firefly = FireflyOptimiser(30, 30, light_absorption=LIGHT_ABSORPTION, step_size=STEP_SIZE, max_iterations=MAX_ITERATIONS, function_key=FUNCTION_KEY, tolerance=TOLERANCE)
+firefly.run()
 
 print("Improved firefly algorithm:")
 improved_firefly = ImprovedFireflyOptimiser(30, 30, light_absorption=LIGHT_ABSORPTION, step_size=STEP_SIZE, max_iterations=MAX_ITERATIONS, min_brightness=MIN_BRIGHTNESS, function_key=FUNCTION_KEY, tolerance=TOLERANCE)
 improved_firefly.run()
+
+print(improved_firefly.best_solution)
