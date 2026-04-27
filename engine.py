@@ -15,7 +15,7 @@ class TradingEngine:
     def sma(self, window=10):
         return np.mean(self.price_history[-window:]) if len(self.price_history) >= window else np.mean(self.price_history) if self.price_history else 0
 
-    def ema(self):
+    def ema(self, window=10):
         return 0
 
     # Use the given weights to predict the price at the end of a day
