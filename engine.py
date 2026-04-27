@@ -1,4 +1,5 @@
 from enum import Enum
+import numpy as np
 
 class Signal(Enum):
     BUY = 1
@@ -11,8 +12,8 @@ class TradingEngine:
 
         self.price_history = []
 
-    def sma(self):
-        return 0
+    def sma(self, window=10):
+        return np.mean(self.price_history[-window:]) if len(self.price_history) >= window else np.mean(self.price_history) if self.price_history else 0
 
     def ema(self):
         return 0
