@@ -2,13 +2,13 @@ from engine import TradingEngine
 from optimiser import GradientDescentOptimiser
 
 def main():
-    # idk do stuff
-    optimiser = GradientDescentOptimiser()
     engine = TradingEngine()
+    optimiser = GradientDescentOptimiser(engine)
 
-    while not optimiser.termination_criteria_reached():
-        optimiser.update()
+    # train up the optimiser against some past data
+    optimiser.run()
 
+    # then we check it against new data
 
 if __name__ == "__main__":
     main()

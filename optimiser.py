@@ -1,9 +1,11 @@
 import numpy as np
 from benchmarks import Benchmarks
+from engine import TradingEngine
 
 class Optimiser:
-    def __init__(self):
+    def __init__(self, trading_engine=None):
         self.best_solution = list()
+        self.trading_engine = trading_engine
 
     # do a tick
     def update(self) -> None:
@@ -59,9 +61,9 @@ class GradientDescentOptimiser(Optimiser):
         return self.iteration >= self.max_iterations
 
     def objective_function(self, values):
-        return Benchmarks.f12_shifted_sphere(values)
+        return self.trading_engine.evaluate_parameters(values)
     
-g = GradientDescentOptimiser(10)
+g = GradientDescentOptimiser(10, TradingEngine())
 g.run()
 print(g.best_solution)
 print(g.objective_function(g.best_solution))

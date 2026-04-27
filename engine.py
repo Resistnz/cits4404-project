@@ -9,14 +9,23 @@ class TradingEngine:
     def __init__(self):
         print(" tell me what to do and ill do it")
 
-    # Use the given weights to predict the price at the end of a day
-    @staticmethod
-    def predict_end_of_day_price(weights):
+        self.price_history = []
+
+    def sma(self):
         return 0
 
-    # main engine logic go in here
-    # bro knows nothing other than the indicators it gets
-    def run(self, indicator1, indicator2) -> Signal:
-        # e.g. if indicator1 > indicator 2 then BUY pls
+    def ema(self):
+        return 0
 
-        return Signal.BUY
+    # Use the given weights to predict the price at the end of a day
+    def predict_end_of_day_price(self, weights):
+        return 0
+    
+    # Use the weights to predict the price at the end of the day, and return the error
+    # Lower error is better, i.e. minimiser
+    def evaluate_parameters(self, weights):
+        predicted_price = TradingEngine.predict_end_of_day_price(weights)
+
+        actual_price = 0 # idk
+
+        return abs(predicted_price - actual_price)
