@@ -3,7 +3,7 @@ from optimiser import GradientDescentOptimiser
 
 def main():
     engine = TradingEngine()
-    optimiser = GradientDescentOptimiser(engine)
+    optimiser = GradientDescentOptimiser(dimensions=10, trading_engine=engine)
 
     # train up the optimiser against some past data
     optimiser.run()

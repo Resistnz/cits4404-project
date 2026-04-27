@@ -24,7 +24,7 @@ class TradingEngine:
     # Use the weights to predict the price at the end of the day, and return the error
     # Lower error is better, i.e. minimiser
     def evaluate_parameters(self, weights):
-        predicted_price = TradingEngine.predict_end_of_day_price(weights)
+        predicted_price = self.predict_end_of_day_price(weights)
 
         actual_price = 0 # idk
 

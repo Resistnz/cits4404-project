@@ -24,8 +24,8 @@ class Optimiser:
     
 # Super basic SSO optimiser
 class GradientDescentOptimiser(Optimiser):
-    def __init__(self, dimensions, step_size=0.01, max_iterations=1000, sample_count=10):
-        super().__init__()
+    def __init__(self, dimensions, step_size=0.01, max_iterations=1000, sample_count=10, trading_engine=None):
+        super().__init__(trading_engine=trading_engine)
 
         self.step_size = step_size
         self.iteration = 0
@@ -62,8 +62,3 @@ class GradientDescentOptimiser(Optimiser):
 
     def objective_function(self, values):
         return self.trading_engine.evaluate_parameters(values)
-    
-g = GradientDescentOptimiser(10, TradingEngine())
-g.run()
-print(g.best_solution)
-print(g.objective_function(g.best_solution))
