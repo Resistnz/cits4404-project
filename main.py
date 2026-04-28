@@ -24,7 +24,7 @@ def main():
     print(f"We ended with: ${usd}!")
 
     # Graph it
-    bot.generate_signals(optimiser.best_solution, graph=True)
+    #bot.generate_signals(optimiser.best_solution, graph=True)
 
 if __name__ == "__main__":
     main()

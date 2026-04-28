@@ -31,8 +31,6 @@ Our Optimiser class is how we find the good weights for the indicators that our 
 Each iteration, the Optimiser will simulate trading over a period (e.g. 1 year) in the TradingBot using its current hypothesis, and the amount of money it makes becomes the objective function. 
 The Optimiser uses this to **minimise** this objective function (as currently more profit == lower objective value), but you can change this if you want by multiplying the objective function value by -1 to gain a **maximiser**. 
 
-The language of our Optimser is just some floats, and we are simply optimising for a vector of real values. Our hypothesis space is defined by the `val_min` and `val_max` parameters, which clip each value during optimisation. 
-
 -----
 
 Our main function is simple - we pick our trading bot and our optimiser, train the optimiser to get good weights for the indicators (using the amount of money made as the objective function), and then we get our `best_solution`, which we can use to trade on future data.
