@@ -7,6 +7,9 @@ class Signal(IntEnum):
     HOLD = 0
 
 class TradingBot:
+    def __init__(self):
+        self.P = self.load_price_history(start_time=1614556800, end_time=1646092800)
+
     @staticmethod
     def load_price_history(start_time, end_time):
         filepath = "data/BTC-Daily.csv"
@@ -85,27 +88,26 @@ class TradingBot:
     
     # Use the weights to run the bot, and then see if it makes money or not
     # Can override this with different scaling functions
+    # Currently this is a minimiser
     def evaluate_parameters(self, weights):
-        final_balance = self.run(start_time=1614556800, end_time=1646092800, weights=weights) # One year
+        final_balance = self.run(weights) # One year
 
-        return final_balance - 1000
+        return 1000 - final_balance
     
     # Override this
-    def generate_signals(self, start_time, end_time, weights):
-        signals = [Signal.HOLD] * ((end_time - start_time)/86400) # A signal for each time, either 
+    def generate_signals(self, weights):
+        signals = [Signal.HOLD] * len(self.P) # A signal for each time, either 
 
         return signals
     
     # Simulate a whole run of the bot 
-    def run(self, start_time, end_time, weights):
-        print("Starting with $1000 USD")
+    def run(self, weights):
+        #print("Starting with $1000 USD")
 
         usd = 1000
         bitcoin = 0
 
-        signals = self.generate_signals(start_time, end_time, weights)
-
-        P = self.load_price_history(start_time, end_time)
+        signals = self.generate_signals(weights)
 
         # Move across all signals
         for i in range(len(signals)):
@@ -113,43 +115,42 @@ class TradingBot:
 
             if signal == Signal.BUY and usd > 0:
                 # convert all USD to BTC
-                bitcoin = usd / P[i] * 0.97
+                bitcoin = usd / self.P[i] * 0.97
                 usd = 0
 
-                print(f"Buying BTC at day {i}! We now have {bitcoin} BTC")
+                #print(f"Buying BTC at day {i}! We now have {bitcoin} BTC")
 
             elif signal == Signal.SELL and bitcoin > 0:
                 # convert all BTC to USD
-                usd = bitcoin * P[i] * 0.97
+                usd = bitcoin * self.P[i] * 0.97
                 bitcoin = 0
 
-                print(f"Sellin BTC at day {i}! We now have {usd} USD")
+                #print(f"Sellin BTC at day {i}! We now have {usd} USD")
 
         # convert any remaining BTC to USD
         if bitcoin > 0:
-            usd = bitcoin * P[i] * 0.97
+            usd = bitcoin * self.P[i] * 0.97
 
-        print(f"Ending with ${usd}")
+        #print(f"Ending with ${usd}")
 
         return usd
     
 # The basic bot from p. 11 in the project outline
 class BasicBot(TradingBot):
-    def generate_signals(self, start_time, end_time, weights):
-        P = self.load_price_history(start_time, end_time)
+    def generate_signals(self, weights):
+        smaA = self.wma(self.P, int(weights[0]), self.sma_filter(int(weights[0])))
+        smaB = self.wma(self.P, int(weights[1]), self.sma_filter(int(weights[1])))
 
-        sma10 = self.wma(self.load_price_history(start_time, end_time), 10, self.sma_filter(10))
-        sma20 = self.wma(self.load_price_history(start_time, end_time), 20, self.sma_filter(20))
-
-        sma_diff = sma10 - sma20
+        sma_diff = smaA - smaB
         sign_diff = np.sign(sma_diff)
 
         kernel = np.array([0.5, -0.5])
         buy_signal = np.convolve(sign_diff, kernel, mode='valid')
 
+        # Convert e.g [0, 0, 1, 0, -1] to Signal.BUY and Signal.SELL
         signals = [Signal(x) for x in buy_signal]
 
         # Graph it if you want
-        TradingBot.graph_price(P, sma10, sma20, sma_diff, buy_signal)
+        #TradingBot.graph_price(P, sma10, sma20, sma_diff, buy_signal)
 
         return signals
