@@ -1,9 +1,4 @@
-# cits4404-project
-best trading bot of all time
-
-this looks so gpt but i promise i did write it myself
-
-im thinkin we have like:
+## How does it work
 
                                 optimisation alg.
 
@@ -19,27 +14,25 @@ im thinkin we have like:
 
         buy/sell
 
+## Structurally:
 
-- trading engine is something we do research on and make e.g. SVR
-- our language is just a bunch of weights (numbers)
-- dimension will be however many indicators we pick
+Our TradingBot provides functions for calculating indicators on historical data, such as an n-day-SMA. In making our own TradingBot, we just need to override the `generate_signals` function. In here, we use some combination of indicators, scaled or otherwise defined by some weights, to generate a list of `Signals`, such as:
 
-pros:
- - probably relatively smooth solution space
- - ez pz to figure out our hypothesis space/language cause its just all numbers
+[Signal.HOLD, Signal.HOLD, Signal.BUY, Signal.HOLD, Signal.SELL, Signal.HOLD, Signal.BUY]
 
-cons:
- - we gotta figure out some trading engine (proabbly still not hard)
+Each element of this list corresponds to a day of data. When the program reaches a Signal.BUY day, it will buy, and the same for Signal.SELL.
 
-_______________________________________________ OR:
+See `bots/basic_bot.py` for a simple example from the project description.
 
-we full send it and get the optimisation alg. to build a bot entirely
-our language becomes more complicated where we actually build a bot, e.g. practice test Q1
+-----
 
-pros:
- - more focused on optimisation
- - could be cool 
- 
-cons:
- - solution space gets all fucked up and discontinuous
- - probably wouldn't even work that well BUT it might
+Our Optimiser class is how we find the good weights for the indicators that our TradingBot uses. Override the `init`, `update` and `termination_criteria_reached` functions and implement your own optimisation algorithm. See `algorithms/gradient_descent.py` for a simple example.
+
+Each iteration, the Optimiser will simulate trading over a period (e.g. 1 year) in the TradingBot using its current hypothesis, and the amount of money it makes becomes the objective function. 
+The Optimiser uses this to **minimise** this objective function (as currently more profit == lower objective value), but you can change this if you want by multiplying the objective function value by -1 to gain a **maximiser**. 
+
+The language of our Optimser is just some floats, and we are simply optimising for a vector of real values of size `dimensions`. Our hypothesis space is defined by the `val_min` and `val_max` parameters, which clip each value during optimisation. 
+
+-----
+
+Our main function is simple - we pick our trading bot and our optimiser, train the optimiser to get good weights for the indicators (using the amount of money made as the objective function), and then we get our `best_solution`, which we can use to trade on future data.
