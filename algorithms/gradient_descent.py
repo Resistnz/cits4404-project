@@ -22,7 +22,7 @@ class GradientDescentOptimiser(Optimiser):
 
         # Take a sample of random points and move in the best direction
         for i in range(self.sample_count):
-            newPos = self.pos + self.step_size * np.random.uniform(self.val_min, self.val_max, len(self.pos))
+            newPos = self.pos + self.step_size * np.random.uniform(-1, 1, len(self.pos))
             newPos = np.clip(newPos, self.val_min, self.val_max)
 
             if self.objective_function(newPos) < best:

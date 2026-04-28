@@ -1,15 +1,17 @@
-from bots.bot import TradingBot, BasicBot
+from bots.basic_bot import BasicBot
 from algorithms.gradient_descent import GradientDescentOptimiser
+from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
 
 def main():
     bot = BasicBot()
-    optimiser = GradientDescentOptimiser(
+    optimiser = FireflyOptimiser(
         dimensions=2, 
         trading_bot=bot, 
         max_iterations=1000, 
-        step_size=1,
-        val_min=3,
-        val_max=40
+        step_size=5,
+        val_min=1,
+        val_max=300,
+        num_fireflies=30
         )
 
     # train up the optimiser against some past data
@@ -20,6 +22,9 @@ def main():
 
     usd = bot.run(optimiser.best_solution)
     print(f"We ended with: ${usd}!")
+
+    # Graph it
+    bot.generate_signals(optimiser.best_solution, graph=True)
 
 if __name__ == "__main__":
     main()

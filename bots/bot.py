@@ -8,7 +8,8 @@ class Signal(IntEnum):
 
 class TradingBot:
     def __init__(self):
-        self.P = self.load_price_history(start_time=1614556800, end_time=1646092800)
+        self.P = self.load_price_history(start_time=1614556800, end_time=1646092800) # One year
+        #self.P = self.load_price_history(start_time=1643500800, end_time=1646092800) # 30 days
 
     @staticmethod
     def load_price_history(start_time, end_time):
@@ -53,12 +54,12 @@ class TradingBot:
         plt.plot(P, color='black', marker='+', linestyle='-', linewidth=1, markersize=5, label='P')
 
         # 2. Plot the 10-day and 20-day Simple Moving Averages
-        plt.plot(sma10, color='#1f77b4', label='10 day SMA') # standard matplotlib blue
-        plt.plot(sma20, color='#ff7f0e', label='20 day SMA') # standard matplotlib orange
+        plt.plot(sma10, color='#1f77b4', label='1 day SMA') # standard matplotlib blue
+        plt.plot(sma20, color='#ff7f0e', label='5 day SMA') # standard matplotlib orange
 
         # 3. Plot the SMA difference as a dashed grey line
         # Note: Using the label exactly as it appears in your image's legend
-        plt.plot(sma_diff, color='grey', linestyle='--', label='SMA10-SMA40')
+        plt.plot(sma_diff, color='grey', linestyle='--', label='SMA1-SMA5')
 
         # 4. Plot the buy signal spikes as a solid grey line
         plt.plot(buy_signal, color='darkgrey', linestyle='-', linewidth=1.5, label='buy signal')
@@ -106,6 +107,7 @@ class TradingBot:
 
         usd = 1000
         bitcoin = 0
+        transaction_fee = 0.97
 
         signals = self.generate_signals(weights)
 
@@ -115,42 +117,22 @@ class TradingBot:
 
             if signal == Signal.BUY and usd > 0:
                 # convert all USD to BTC
-                bitcoin = usd / self.P[i] * 0.97
+                bitcoin = usd / self.P[i] * transaction_fee
                 usd = 0
 
                 #print(f"Buying BTC at day {i}! We now have {bitcoin} BTC")
 
             elif signal == Signal.SELL and bitcoin > 0:
                 # convert all BTC to USD
-                usd = bitcoin * self.P[i] * 0.97
+                usd = bitcoin * self.P[i] * transaction_fee
                 bitcoin = 0
 
                 #print(f"Sellin BTC at day {i}! We now have {usd} USD")
 
         # convert any remaining BTC to USD
         if bitcoin > 0:
-            usd = bitcoin * self.P[i] * 0.97
+            usd = bitcoin * self.P[i] * transaction_fee
 
         #print(f"Ending with ${usd}")
 
         return usd
-    
-# The basic bot from p. 11 in the project outline
-class BasicBot(TradingBot):
-    def generate_signals(self, weights):
-        smaA = self.wma(self.P, int(weights[0]), self.sma_filter(int(weights[0])))
-        smaB = self.wma(self.P, int(weights[1]), self.sma_filter(int(weights[1])))
-
-        sma_diff = smaA - smaB
-        sign_diff = np.sign(sma_diff)
-
-        kernel = np.array([0.5, -0.5])
-        buy_signal = np.convolve(sign_diff, kernel, mode='valid')
-
-        # Convert e.g [0, 0, 1, 0, -1] to Signal.BUY and Signal.SELL
-        signals = [Signal(x) for x in buy_signal]
-
-        # Graph it if you want
-        #TradingBot.graph_price(P, sma10, sma20, sma_diff, buy_signal)
-
-        return signals

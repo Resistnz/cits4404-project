@@ -1,9 +1,7 @@
 # cits4404-project
 best trading bot of all time
 
-this looks so gpt but i promise i did write it myself
-
-im thinkin we have like:
+current setup:
 
                                 optimisation alg.
 
@@ -31,15 +29,4 @@ pros:
 cons:
  - we gotta figure out some trading engine (proabbly still not hard)
 
-_______________________________________________ OR:
 
-we full send it and get the optimisation alg. to build a bot entirely
-our language becomes more complicated where we actually build a bot, e.g. practice test Q1
-
-pros:
- - more focused on optimisation
- - could be cool 
- 
-cons:
- - solution space gets all fucked up and discontinuous
- - probably wouldn't even work that well BUT it might
