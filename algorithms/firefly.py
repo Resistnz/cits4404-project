@@ -1,8 +1,8 @@
 # From paper "An improved firefly algorithm with dynamic self-adaptive adjustment"
 
-from bot import Optimiser
+from main import Optimiser
 import numpy as np
-from benchmarks import functions
+from algorithms.benchmarks import functions
 
 class FireflyOptimiser(Optimiser):
     def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", tolerance=0.01):

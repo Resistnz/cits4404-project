@@ -1,11 +1,11 @@
 import numpy as np
-from benchmarks import Benchmarks
-from engine import TradingEngine
+from algorithms.benchmarks import Benchmarks
+from bots.bot import TradingBot
 
 class Optimiser:
-    def __init__(self, trading_engine=None):
+    def __init__(self, trading_bot=None):
         self.best_solution = list()
-        self.trading_engine = trading_engine
+        self.trading_bot = trading_bot
 
     # do a tick
     def update(self) -> None:
@@ -24,8 +24,8 @@ class Optimiser:
     
 # Super basic SSO optimiser
 class GradientDescentOptimiser(Optimiser):
-    def __init__(self, dimensions, step_size=0.01, max_iterations=1000, sample_count=10, trading_engine=None):
-        super().__init__(trading_engine=trading_engine)
+    def __init__(self, dimensions, step_size=0.01, max_iterations=1000, sample_count=10, trading_bot=None):
+        super().__init__(trading_bot=trading_bot)
 
         self.step_size = step_size
         self.iteration = 0
@@ -61,4 +61,4 @@ class GradientDescentOptimiser(Optimiser):
         return self.iteration >= self.max_iterations
 
     def objective_function(self, values):
-        return self.trading_engine.evaluate_parameters(values)
+        return self.trading_bot.evaluate_parameters(values)
