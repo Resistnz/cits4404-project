@@ -3,21 +3,21 @@ from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
 
 def main():
-    bot = BasicBot()
-    optimiser = FireflyOptimiser(
+    bot = BasicBot() # This can be any TradingBot child class
+    optimiser = GradientDescentOptimiser( # This can be any Optimiser child class
         dimensions=2, 
         trading_bot=bot, 
-        max_iterations=1000, 
+        max_iterations=500, 
         step_size=5,
         val_min=1,
         val_max=300,
         num_fireflies=30
         )
 
-    # train up the optimiser against some past data
+    # Train up the optimiser against some past data
     optimiser.run()
 
-    # then we run our best one
+    # Check our best solution
     print(f"Best solution found: {optimiser.best_solution}")
 
     usd = bot.run(optimiser.best_solution)

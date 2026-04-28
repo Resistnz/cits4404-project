@@ -44,7 +44,7 @@ class TradingBot:
         return np.convolve(TradingBot.pad(P,N), kernel, 'valid')    
     
     @staticmethod
-    def graph_price(P, sma10, sma20, sma_diff, buy_signal):
+    def graph_price(P, buy_signal):
         import matplotlib.pyplot as plt
 
         # Create a figure with a wide aspect ratio similar to the image
@@ -54,12 +54,12 @@ class TradingBot:
         plt.plot(P, color='black', marker='+', linestyle='-', linewidth=1, markersize=5, label='P')
 
         # 2. Plot the 10-day and 20-day Simple Moving Averages
-        plt.plot(sma10, color='#1f77b4', label='1 day SMA') # standard matplotlib blue
-        plt.plot(sma20, color='#ff7f0e', label='5 day SMA') # standard matplotlib orange
+        # plt.plot(sma10, color='#1f77b4', label='1 day SMA') # standard matplotlib blue
+        # plt.plot(sma20, color='#ff7f0e', label='5 day SMA') # standard matplotlib orange
 
-        # 3. Plot the SMA difference as a dashed grey line
-        # Note: Using the label exactly as it appears in your image's legend
-        plt.plot(sma_diff, color='grey', linestyle='--', label='SMA1-SMA5')
+        # # 3. Plot the SMA difference as a dashed grey line
+        # # Note: Using the label exactly as it appears in your image's legend
+        # plt.plot(sma_diff, color='grey', linestyle='--', label='SMA1-SMA5')
 
         # 4. Plot the buy signal spikes as a solid grey line
         plt.plot(buy_signal, color='darkgrey', linestyle='-', linewidth=1.5, label='buy signal')

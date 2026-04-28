@@ -18,6 +18,6 @@ class BasicBot(TradingBot):
 
         # Graph it if you want
         if graph:
-            TradingBot.graph_price(self.P, smaA, smaB, sma_diff, buy_signal)
+            TradingBot.graph_price(self.P, buy_signal)
 
         return signals
