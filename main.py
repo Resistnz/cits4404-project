@@ -4,7 +4,7 @@ from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
 
 def main():
     bot = BasicBot() # This can be any TradingBot child class
-    optimiser = GradientDescentOptimiser( # This can be any Optimiser child class
+    optimiser = FireflyOptimiser( # This can be any Optimiser child class
         dimensions=2, 
         trading_bot=bot, 
         max_iterations=500, 
@@ -24,7 +24,7 @@ def main():
     print(f"We ended with: ${usd}!")
 
     # Graph it
-    #bot.generate_signals(optimiser.best_solution, graph=True)
+    bot.generate_signals(optimiser.best_solution, graph=True)
 
 if __name__ == "__main__":
     main()
