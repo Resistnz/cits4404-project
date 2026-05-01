@@ -1,6 +1,7 @@
 import numpy as np
 from bots.bot import TradingBot, Signal
 
+
 # The basic bot from p. 11 in the project outline
 class BasicBot(TradingBot):
     def generate_signals(self, weights, graph=False):
@@ -11,7 +12,7 @@ class BasicBot(TradingBot):
         sign_diff = np.sign(sma_diff)
 
         kernel = np.array([0.5, -0.5])
-        buy_signal = np.convolve(sign_diff, kernel, mode='valid')
+        buy_signal = np.convolve(sign_diff, kernel, mode="valid")
 
         # Convert e.g [0, 0, 1, 0, -1] to Signal.BUY and Signal.SELL
         signals = [Signal(x) for x in buy_signal]

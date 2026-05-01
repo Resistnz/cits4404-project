@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 class Benchmarks:
     @staticmethod
     def f1_schaffer(weights):
@@ -58,7 +59,7 @@ class Benchmarks:
     def f8_schwefel_1_2(weights):
         # Interval: [-10, 10]
         # This is the sum of squared cumulative sums
-        return np.sum([np.sum(weights[:i+1])**2 for i in range(len(weights))])
+        return np.sum([np.sum(weights[: i + 1]) ** 2 for i in range(len(weights))])
 
     @staticmethod
     def f9_schwefel_2_21(weights):
@@ -70,7 +71,7 @@ class Benchmarks:
         # Interval: [-10, 10]
         abs_w = np.abs(weights)
         return np.sum(abs_w) + np.prod(abs_w)
-    
+
     @staticmethod
     def f11_rosenbrock(weights):
         # Search Range: [-5, 5] (usually)
@@ -78,11 +79,12 @@ class Benchmarks:
         term1 = 100.0 * np.square(weights[1:] - np.square(weights[:-1]))
         term2 = np.square(1.0 - weights[:-1])
         return np.sum(term1 + term2)
-    
+
     @staticmethod
     def f12_shifted_sphere(weights):
         # Target is now (0.5, 0.5, ..., 0.5)
         return np.sum(np.square(weights - 0.5))
+
 
 # Helper dictionary to pick functions by name/index
 functions = {
@@ -97,5 +99,5 @@ functions = {
     "f9": Benchmarks.f9_schwefel_2_21,
     "f10": Benchmarks.f10_schwefel_2_22,
     "f11": Benchmarks.f11_rosenbrock,
-    "f12": Benchmarks.f12_shifted_sphere
+    "f12": Benchmarks.f12_shifted_sphere,
 }

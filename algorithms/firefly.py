@@ -4,9 +4,26 @@ from algorithms.optimiser import Optimiser
 import numpy as np
 from algorithms.benchmarks import functions
 
+
 class FireflyOptimiser(Optimiser):
-    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", trading_bot=None, val_min=-1, val_max=1):
-        super().__init__(max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
+    def __init__(
+        self,
+        num_fireflies,
+        dimensions,
+        light_absorption=0.1,
+        step_size=0.01,
+        max_iterations=1000,
+        function_key="f2",
+        trading_bot=None,
+        val_min=-1,
+        val_max=1,
+    ):
+        super().__init__(
+            max_iterations=max_iterations,
+            trading_bot=trading_bot,
+            val_min=val_min,
+            val_max=val_max,
+        )
 
         self.n = num_fireflies
         self.D = dimensions
@@ -19,14 +36,14 @@ class FireflyOptimiser(Optimiser):
 
     # Get the brightness between 2 given fireflies
     def brightness(self, i, j) -> float:
-        r = np.linalg.norm(self.fireflies[i] - self.fireflies[j]) # Eq. 2 (distance)
+        r = np.linalg.norm(self.fireflies[i] - self.fireflies[j])  # Eq. 2 (distance)
 
-        return np.exp(-self.y * r*r) # Eq. 3
+        return np.exp(-self.y * r * r)  # Eq. 3
 
     def update(self):
         self.iteration += 1
 
-        # quality of each firefly solution 
+        # quality of each firefly solution
         intensities = np.apply_along_axis(self.objective_function, 1, self.fireflies)
 
         new_fireflies = self.fireflies.copy()
@@ -39,22 +56,48 @@ class FireflyOptimiser(Optimiser):
                     b = self.brightness(i, j)
                     d = np.random.uniform(-1, 1, self.D)
 
-                    new_fireflies[i] += b * (self.fireflies[j] - new_fireflies[i]) + self.a * d # Eq. 4
-                    new_fireflies[i] = np.clip(new_fireflies[i], self.val_min, self.val_max)
+                    new_fireflies[i] += (
+                        b * (self.fireflies[j] - new_fireflies[i]) + self.a * d
+                    )  # Eq. 4
+                    new_fireflies[i] = np.clip(
+                        new_fireflies[i], self.val_min, self.val_max
+                    )
 
         self.fireflies = new_fireflies
 
         best = np.argmin(intensities)
         self.best_solution = self.fireflies[best]
 
-        #print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
+        # print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
+
 
 class ImprovedFireflyOptimiser(FireflyOptimiser):
-    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, 
-                       min_brightness=0.1, w_start=0.9, w_end=0.4, theta=0.1, trading_bot=None, val_min=-1, val_max=1):
-        
-        super().__init__(num_fireflies=num_fireflies, dimensions=dimensions, light_absorption=light_absorption, 
-                         step_size=step_size, max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
+    def __init__(
+        self,
+        num_fireflies,
+        dimensions,
+        light_absorption=0.1,
+        step_size=0.01,
+        max_iterations=1000,
+        min_brightness=0.1,
+        w_start=0.9,
+        w_end=0.4,
+        theta=0.1,
+        trading_bot=None,
+        val_min=-1,
+        val_max=1,
+    ):
+
+        super().__init__(
+            num_fireflies=num_fireflies,
+            dimensions=dimensions,
+            light_absorption=light_absorption,
+            step_size=step_size,
+            max_iterations=max_iterations,
+            trading_bot=trading_bot,
+            val_min=val_min,
+            val_max=val_max,
+        )
 
         self.b_min = min_brightness
 
@@ -65,24 +108,30 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
 
     # Clamped brightness
     def brightness(self, i, j) -> float:
-        r = np.linalg.norm(self.fireflies[i] - self.fireflies[j]) # Eq. 2 (distance)
+        r = np.linalg.norm(self.fireflies[i] - self.fireflies[j])  # Eq. 2 (distance)
 
-        return self.b_min + (1 - self.b_min) * np.exp(-self.y * r*r) # Eq. 5
+        return self.b_min + (1 - self.b_min) * np.exp(-self.y * r * r)  # Eq. 5
 
     def update(self):
         self.iteration += 1
 
-        # quality of each firefly solution 
+        # quality of each firefly solution
         intensities = np.apply_along_axis(self.objective_function, 1, self.fireflies)
 
         new_fireflies = self.fireflies.copy()
 
         # logarithmic interial weight
-        w = self.w_start - (self.w_start - self.w_end) * np.emath.logn(self.max_iterations, self.iteration) # Eq. 6
+        w = self.w_start - (self.w_start - self.w_end) * np.emath.logn(
+            self.max_iterations, self.iteration
+        )  # Eq. 6
 
         # dynamic step size
-        c = self.theta**self.D * self.max_iterations * np.exp(-self.iteration/self.max_iterations) # Eq. 7
-        #c = 1
+        c = (
+            self.theta**self.D
+            * self.max_iterations
+            * np.exp(-self.iteration / self.max_iterations)
+        )  # Eq. 7
+        # c = 1
 
         # check all firefly pairs? this is O(n^2) idk why the paper says its not
         for i in range(self.n):
@@ -93,7 +142,7 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
                 # bros better get over there
                 if intensities[j] < intensities[i]:
                     b = self.brightness(i, j)
-                    
+
                     move += b * (self.fireflies[j] - self.fireflies[i])
 
                     better_count += 1
@@ -112,4 +161,4 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
         best = np.argmin(intensities)
         self.best_solution = self.fireflies[best]
 
-        #print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
+        # print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
