@@ -37,6 +37,23 @@ class BigBangBigCrunchOptimiser(Optimiser):
 
         self.obj_func = functions[function_key]
 
+    def get_mass(self, point):
+        return point
+
+    def get_new_individual(self, individual):
+        return individual
+
+    def big_bang(self):
+        for individual in self.population:
+            individual = self.get_new_individual(individual)
+
+    def big_crunch(self):
+        inverse_fitness_sum = 0
+        inverse_fitness_point_sum = 0
+        for i in range(self.population_size):
+            pass
+        self.center_of_mass = 0
+
     def update(self):
         self.iteration += 1
 
