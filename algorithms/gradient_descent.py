@@ -1,10 +1,25 @@
 from algorithms.optimiser import Optimiser
 import numpy as np
 
+
 # Super basic SSO optimiser
 class GradientDescentOptimiser(Optimiser):
-    def __init__(self, dimensions, step_size=0.01, max_iterations=1000, sample_count=10, trading_bot=None, val_min=-1, val_max=1):
-        super().__init__(max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
+    def __init__(
+        self,
+        dimensions,
+        step_size=0.01,
+        max_iterations=1000,
+        sample_count=10,
+        trading_bot=None,
+        val_min=-1,
+        val_max=1,
+    ):
+        super().__init__(
+            max_iterations=max_iterations,
+            trading_bot=trading_bot,
+            val_min=val_min,
+            val_max=val_max,
+        )
 
         self.step_size = step_size
         self.sample_count = sample_count
