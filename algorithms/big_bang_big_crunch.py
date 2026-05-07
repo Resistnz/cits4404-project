@@ -38,6 +38,13 @@ class BigBangBigCrunchOptimiser(Optimiser):
         self.obj_func = functions[function_key]
 
     def get_new_point(self):
+        """
+        Generates a new point in the search space using a modified
+        Gaussian distribution centered around the current best location.
+
+        Returns:
+            numpy.ndarray: The coordinates of the new point.
+        """
         return np.clip(
             self.center_of_mass
             + (self.val_max * np.random.normal(size=self.dimensions)) / self.iteration,
@@ -46,6 +53,13 @@ class BigBangBigCrunchOptimiser(Optimiser):
         )
 
     def big_bang(self):
+        """
+        Initialises or recalculates the entire population.
+        If called after the first iteration, it calculates the new
+        points around the current best location.
+        Otherwise, it initialises the population randomly across the
+        defined search space.
+        """
         self.population = (
             [self.get_new_point() for _ in range(self.population_size)]
             if self.iteration > 0
@@ -55,9 +69,24 @@ class BigBangBigCrunchOptimiser(Optimiser):
         )
 
     def get_mass(self, index):
+        """
+        Calculates the 'mass' associated with a point using the inverse of its fitness score.
+
+        Args:
+            index (int): The index of the point whose mass is to be calculated.
+
+        Returns:
+            float: The mass of the specified point.
+        """
         return 1 / self.fitnesses[index]
 
     def big_crunch(self):
+        """
+        Recalculates the center of mass for the current population.
+        It first evaluates the fitness of every point, then weights each point's
+        position by its inverse fitness (mass) to find the weighted average
+        location of the entire population.
+        """
         self.fitnesses = np.apply_along_axis(
             self.objective_function, 1, self.population
         )
