@@ -34,25 +34,41 @@ class BigBangBigCrunchOptimiser(Optimiser):
         self.population = np.random.uniform(
             val_min, val_max, (population_size, dimensions)
         )
+        self.center_of_mass = self.big_crunch()
 
         self.obj_func = functions[function_key]
 
     def get_mass(self, point):
         return point
 
-    def get_new_individual(self, individual):
-        return individual
+    def get_bound_individual(self, individual):
+        return [
+            (
+                self.val_min
+                if value < self.val_min
+                else self.val_max if value > self.val_max else value
+            )
+            for value in individual
+        ]
+
+    def get_new_individual(self):
+        return self.get_bound_individual(
+            self.center_of_mass
+            + (self.val_max * np.random.normal(size=self.dimensions)) / self.iteration
+        )
 
     def big_bang(self):
-        for individual in self.population:
-            individual = self.get_new_individual(individual)
+        self.population = [
+            self.get_new_individual() for _ in range(self.population_size)
+        ]
 
     def big_crunch(self):
         inverse_fitness_sum = 0
         inverse_fitness_point_sum = 0
+        center_of_mass = 0
         for i in range(self.population_size):
             pass
-        self.center_of_mass = 0
+        return center_of_mass
 
     def update(self):
         self.iteration += 1
