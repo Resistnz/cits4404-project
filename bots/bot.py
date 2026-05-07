@@ -131,7 +131,7 @@ class TradingBot:
     def evaluate_parameters(self, weights):
         final_balance = self.run(weights)  # One year
 
-        return 1000 - final_balance
+        return 1000 / max(final_balance, 1e-9)
 
     # Override this
     def generate_signals(self, weights):
