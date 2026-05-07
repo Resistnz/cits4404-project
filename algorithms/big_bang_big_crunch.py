@@ -37,9 +37,6 @@ class BigBangBigCrunchOptimiser(Optimiser):
 
         self.obj_func = functions[function_key]
 
-    def get_mass(self, index):
-        return 1 / self.fitnesses[index]
-
     def get_new_individual(self):
         return np.clip(
             self.center_of_mass
@@ -56,6 +53,9 @@ class BigBangBigCrunchOptimiser(Optimiser):
                 self.val_min, self.val_max, (self.population_size, self.dimensions)
             )
         )
+
+    def get_mass(self, index):
+        return 1 / self.fitnesses[index]
 
     def big_crunch(self):
         self.fitnesses = np.apply_along_axis(
