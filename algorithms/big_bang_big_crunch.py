@@ -41,20 +41,12 @@ class BigBangBigCrunchOptimiser(Optimiser):
     def get_mass(self, point):
         return point
 
-    def get_bound_individual(self, individual):
-        return [
-            (
-                self.val_min
-                if value < self.val_min
-                else self.val_max if value > self.val_max else value
-            )
-            for value in individual
-        ]
-
     def get_new_individual(self):
-        return self.get_bound_individual(
+        return np.clip(
             self.center_of_mass
-            + (self.val_max * np.random.normal(size=self.dimensions)) / self.iteration
+            + (self.val_max * np.random.normal(size=self.dimensions)) / self.iteration,
+            self.val_min,
+            self.val_max,
         )
 
     def big_bang(self):
