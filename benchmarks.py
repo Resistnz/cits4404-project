@@ -1,101 +1,102 @@
-# This was AI generated to match the 10 functions used in the paper
-
 import numpy as np
 
 class Benchmarks:
     @staticmethod
-    def f1_schaffer(weights):
-        # Interval: [-10, 10]
-        sum_sq = np.sum(np.square(weights))
-        numerator = np.square(np.sin(np.sqrt(sum_sq))) - 0.5
-        denominator = np.square(1 + 0.001 * sum_sq)
-        return 0.5 + numerator / denominator
+    def _u(x, a, k, m):
+        """
+        Helper piecewise function u(x_i, a, k, m) used in F11 and F12.
+        """
+        res = np.zeros_like(x, dtype=float)
+        
+        # x_i > a
+        mask_gt = x > a
+        res[mask_gt] = k * (x[mask_gt] - a)**m
+        
+        # x_i < -a
+        mask_lt = x < -a
+        res[mask_lt] = k * (-x[mask_lt] - a)**m
+        
+        # -a <= x_i <= a remains 0
+        return res
 
     @staticmethod
-    def f2_sphere(weights):
-        # Interval: [-100, 100]
-        return np.sum(np.square(weights))
+    def f7(weights):
+        # Range: [-500, 500]
+        return np.sum(-weights * np.sin(np.sqrt(np.abs(weights))))
 
     @staticmethod
-    def f3_rastrigin(weights):
-        # Interval: [-5.12, 5.12]
-        d = len(weights)
-        return 10 * d + np.sum(weights**2 - 10 * np.cos(2 * np.pi * weights))
+    def f8(weights):
+        # Range: [-5.12, 5.12]
+        return np.sum(weights**2 - 10 * np.cos(2 * np.pi * weights) + 10)
 
     @staticmethod
-    def f4_griewank(weights):
-        # Interval: [-100, 100]
+    def f9(weights):
+        # Range: [-32, 32]
+        n = len(weights)
+        term1 = -20 * np.exp(-0.2 * np.sqrt(np.sum(weights**2) / n))
+        term2 = -np.exp(np.sum(np.cos(2 * np.pi * weights)) / n)
+        return term1 + term2 + 20 + np.e
+
+    @staticmethod
+    def f10(weights):
+        # Range: [-600, 600]
         indices = np.arange(1, len(weights) + 1)
-        sum_part = np.sum(np.square(weights)) / 4000
+        sum_part = np.sum(weights**2) / 4000.0
         prod_part = np.prod(np.cos(weights / np.sqrt(indices)))
         return sum_part - prod_part + 1
 
     @staticmethod
-    def f5_ackley(weights):
-        # Interval: [-35, 35]
-        d = len(weights)
-        sum_sq = np.sum(np.square(weights))
-        sum_cos = np.sum(np.cos(2 * np.pi * weights))
-        term1 = -20 * np.exp(-0.2 * np.sqrt(sum_sq / d))
-        term2 = -np.exp(sum_cos / d)
-        return term1 + term2 + 20 + np.e
+    def f11(weights):
+        # Range: [-50, 50]
+        n = len(weights)
+        y = 1 + (weights + 1) / 4.0
+        
+        # Note: Transcribed exactly from the image image which shows 10*sin(\pi*y_1) 
+        # without a square on the first term.
+        term1 = 10 * np.sin(np.pi * y[0]) 
+        term2 = np.sum((y[:-1] - 1)**2 * (1 + 10 * np.sin(np.pi * y[1:])**2))
+        term3 = (y[-1] - 1)**2
+        
+        main_part = (np.pi / n) * (term1 + term2 + term3)
+        penalty_part = np.sum(Benchmarks._u(weights, 10, 100, 4))
+        
+        return main_part + penalty_part
 
     @staticmethod
-    def f6_sum_squares(weights):
-        # Interval: [-10, 10]
-        indices = np.arange(1, len(weights) + 1)
-        return np.sum(indices * np.square(weights))
+    def f12(weights):
+        # Range: [-50, 50]
+        n = len(weights)
+        x = weights
+        
+        term1 = np.sin(3 * np.pi * x[0])**2
+        term2 = np.sum((x[:-1] - 1)**2 * (1 + np.sin(3 * np.pi * x[1:])**2))
+        term3 = (x[-1] - 1)**2 * (1 + np.sin(2 * np.pi * x[-1])**2)
+        
+        main_part = 0.1 * (term1 + term2 + term3)
+        penalty_part = np.sum(Benchmarks._u(x, 5, 100, 4))
+        
+        return main_part + penalty_part
 
-    @staticmethod
-    def f7_zakharov(weights):
-        # Interval: [-5, 10]
-        indices = np.arange(1, len(weights) + 1)
-        sum1 = np.sum(np.square(weights))
-        sum2 = np.sum(0.5 * indices * weights)
-        return sum1 + sum2**2 + sum2**4
 
-    @staticmethod
-    def f8_schwefel_1_2(weights):
-        # Interval: [-10, 10]
-        # This is the sum of squared cumulative sums
-        return np.sum([np.sum(weights[:i+1])**2 for i in range(len(weights))])
-
-    @staticmethod
-    def f9_schwefel_2_21(weights):
-        # Interval: [-100, 100]
-        return np.max(np.abs(weights))
-
-    @staticmethod
-    def f10_schwefel_2_22(weights):
-        # Interval: [-10, 10]
-        abs_w = np.abs(weights)
-        return np.sum(abs_w) + np.prod(abs_w)
-    
-    @staticmethod
-    def f11_rosenbrock(weights):
-        # Search Range: [-5, 5] (usually)
-        # Global Optimum at (1, 1, ..., 1)
-        term1 = 100.0 * np.square(weights[1:] - np.square(weights[:-1]))
-        term2 = np.square(1.0 - weights[:-1])
-        return np.sum(term1 + term2)
-    
-    @staticmethod
-    def f12_shifted_sphere(weights):
-        # Target is now (0.5, 0.5, ..., 0.5)
-        return np.sum(np.square(weights - 0.5))
-
-# Helper dictionary to pick functions by name/index
-functions = {
-    "f1": Benchmarks.f1_schaffer,
-    "f2": Benchmarks.f2_sphere,
-    "f3": Benchmarks.f3_rastrigin,
-    "f4": Benchmarks.f4_griewank,
-    "f5": Benchmarks.f5_ackley,
-    "f6": Benchmarks.f6_sum_squares,
-    "f7": Benchmarks.f7_zakharov,
-    "f8": Benchmarks.f8_schwefel_1_2,
-    "f9": Benchmarks.f9_schwefel_2_21,
-    "f10": Benchmarks.f10_schwefel_2_22,
-    "f11": Benchmarks.f11_rosenbrock,
-    "f12": Benchmarks.f12_shifted_sphere
+FUNCTION_BOUNDS = {
+    "f7": (-500, 500),
+    "f8": (-5.12, 5.12),
+    "f9": (-32, 32),
+    "f10": (-600, 600),
+    "f11": (-50, 50),
+    "f12": (-50, 50),
 }
+
+# Helper dictionary to pick functions by name
+functions = {
+    "f7": Benchmarks.f7,
+    "f8": Benchmarks.f8,
+    "f9": Benchmarks.f9,
+    "f10": Benchmarks.f10,
+    "f11": Benchmarks.f11,
+    "f12": Benchmarks.f12
+}
+
+
+def get_function_bounds(function_key):
+    return FUNCTION_BOUNDS[function_key]

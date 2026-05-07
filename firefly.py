@@ -1,11 +1,11 @@
 # From paper "An improved firefly algorithm with dynamic self-adaptive adjustment"
 
-from bot import Optimiser
+from optimiser import Optimiser
 import numpy as np
-from benchmarks import functions
+from benchmarks import functions, get_function_bounds
 
 class FireflyOptimiser(Optimiser):
-    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", tolerance=0.01):
+    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", tolerance=0.01, range_min=None, range_max=None):
         super().__init__()
 
         self.n = num_fireflies
@@ -13,7 +13,12 @@ class FireflyOptimiser(Optimiser):
         self.y = light_absorption
         self.a = step_size
 
-        self.fireflies = np.random.uniform(-5.12, 5.12, (self.n, self.D))
+        if range_min is None or range_max is None:
+            range_min, range_max = get_function_bounds(function_key)
+        self.range_min = range_min
+        self.range_max = range_max
+
+        self.fireflies = np.random.uniform(self.range_min, self.range_max, (self.n, self.D))
 
         self.iteration = 0
         self.max_iterations = max_iterations
@@ -52,14 +57,14 @@ class FireflyOptimiser(Optimiser):
                     d = np.random.uniform(-1, 1, self.D)
 
                     new_fireflies[i] += b * (self.fireflies[j] - new_fireflies[i]) + self.a * d # Eq. 4
-                    new_fireflies[i] = np.clip(new_fireflies[i], -5.12, 5.12)
+                    new_fireflies[i] = np.clip(new_fireflies[i], self.range_min, self.range_max)
 
         self.fireflies = new_fireflies
 
         best = np.argmin(intensities)
         self.best_solution = self.fireflies[best]
 
-        print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
+        print(f"\rFirefly Iteration: {self.iteration}/{self.max_iterations}            ", end="")
 
     def termination_criteria_reached(self) -> bool:
         return self.iteration >= self.max_iterations or (len(self.best_solution) > 0 and self.objective_function(self.best_solution) <= self.tolerance)
@@ -69,13 +74,14 @@ class FireflyOptimiser(Optimiser):
 
         #print(f"Completed {self.iteration} iterations")
         #print(f"Best solution: {self.best_solution}")
-        print(f"Objective value: {self.objective_function(self.best_solution)}")
+        #print(f"Objective value: {self.objective_function(self.best_solution)}")
+        return self.objective_function(self.best_solution)
 
 class ImprovedFireflyOptimiser(FireflyOptimiser):
     def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", 
-                       tolerance=0.01, min_brightness=0.1, w_start=0.9, w_end=0.4, theta=0.1):
+                       tolerance=0.01, min_brightness=0.1, w_start=0.9, w_end=0.4, theta=0.1, range_min=None, range_max=None):
         
-        super().__init__(num_fireflies, dimensions, light_absorption, step_size, max_iterations, function_key, tolerance)
+        super().__init__(num_fireflies, dimensions, light_absorption, step_size, max_iterations, function_key, tolerance, range_min, range_max)
 
         self.b_min = min_brightness
 
@@ -126,7 +132,7 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
                 move /= better_count
 
             new_fireflies[i] = w * new_fireflies[i] + move + random_step
-            new_fireflies[i] = np.clip(new_fireflies[i], -5.12, 5.12)
+            new_fireflies[i] = np.clip(new_fireflies[i], self.range_min, self.range_max)
 
         self.fireflies = new_fireflies
 
@@ -134,7 +140,7 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
         self.best_solution = self.fireflies[best]
 
         print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
-
+""" 
 # hyper parameters
 LIGHT_ABSORPTION = 0.5
 STEP_SIZE = 0.01
@@ -152,4 +158,4 @@ print("Improved firefly algorithm:")
 improved_firefly = ImprovedFireflyOptimiser(30, 30, light_absorption=LIGHT_ABSORPTION, step_size=STEP_SIZE, max_iterations=MAX_ITERATIONS, min_brightness=MIN_BRIGHTNESS, function_key=FUNCTION_KEY, tolerance=TOLERANCE)
 improved_firefly.run()
 
-print(improved_firefly.best_solution)
+print(improved_firefly.best_solution) """
