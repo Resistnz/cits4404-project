@@ -37,7 +37,7 @@ class BigBangBigCrunchOptimiser(Optimiser):
 
         self.obj_func = functions[function_key]
 
-    def get_new_individual(self):
+    def get_new_point(self):
         return np.clip(
             self.center_of_mass
             + (self.val_max * np.random.normal(size=self.dimensions)) / self.iteration,
@@ -47,7 +47,7 @@ class BigBangBigCrunchOptimiser(Optimiser):
 
     def big_bang(self):
         self.population = (
-            [self.get_new_individual() for _ in range(self.population_size)]
+            [self.get_new_point() for _ in range(self.population_size)]
             if self.iteration > 0
             else np.random.uniform(
                 self.val_min, self.val_max, (self.population_size, self.dimensions)
@@ -63,14 +63,14 @@ class BigBangBigCrunchOptimiser(Optimiser):
         )
 
         sum_of_mass = 0
-        sum_of_mass_individuals = 0
+        sum_of_mass_points = 0
 
-        for index, individual in enumerate(self.population):
+        for index, point in enumerate(self.population):
             mass = self.get_mass(index)
             sum_of_mass += mass
-            sum_of_mass_individuals += mass * individual
+            sum_of_mass_points += mass * point
 
-        self.center_of_mass = sum_of_mass_individuals / sum_of_mass
+        self.center_of_mass = sum_of_mass_points / sum_of_mass
 
     def update(self):
         self.iteration += 1
