@@ -31,15 +31,14 @@ class BigBangBigCrunchOptimiser(Optimiser):
         self.population_size = population_size
         self.calc_center_of_mass = calc_center_of_mass
         self.deviation_fixed = deviation_fixed
-        self.population = np.random.uniform(
-            val_min, val_max, (population_size, dimensions)
-        )
-        self.center_of_mass = self.big_crunch()
+
+        self.big_bang()
+        self.big_crunch()
 
         self.obj_func = functions[function_key]
 
-    def get_mass(self, point):
-        return point
+    def get_mass(self, index):
+        return 1 / self.fitnesses[index]
 
     def get_new_individual(self):
         return np.clip(
@@ -50,43 +49,36 @@ class BigBangBigCrunchOptimiser(Optimiser):
         )
 
     def big_bang(self):
-        self.population = [
-            self.get_new_individual() for _ in range(self.population_size)
-        ]
+        self.population = (
+            [self.get_new_individual() for _ in range(self.population_size)]
+            if self.iteration > 0
+            else np.random.uniform(
+                self.val_min, self.val_max, (self.population_size, self.dimensions)
+            )
+        )
 
     def big_crunch(self):
-        inverse_fitness_sum = 0
-        inverse_fitness_point_sum = 0
-        center_of_mass = 0
-        for i in range(self.population_size):
-            pass
-        return center_of_mass
+        self.fitnesses = np.apply_along_axis(
+            self.objective_function, 1, self.population
+        )
+
+        sum_of_mass = 0
+        sum_of_mass_individuals = 0
+
+        for index, individual in enumerate(self.population):
+            mass = self.get_mass(index)
+            sum_of_mass += mass
+            sum_of_mass_individuals += mass * individual
+
+        self.center_of_mass = sum_of_mass_individuals / sum_of_mass
 
     def update(self):
         self.iteration += 1
 
-        # quality of each firefly solution
-        intensities = np.apply_along_axis(self.objective_function, 1, self.population)
+        self.big_bang()
+        self.big_crunch()
 
-        new_fireflies = self.population.copy()
-
-        # check all firefly pairs? this is O(n^2) idk why the paper says its not
-        for i in range(self.population_size):
-            for j in range(self.population_size):
-                # bros better maybe we get over there
-                if intensities[j] < intensities[i]:
-                    d = np.random.uniform(-1, 1, self.dimensions)
-
-                    new_fireflies[i] += (
-                        (self.population[j] - new_fireflies[i]) * d
-                    )  # Eq. 4
-                    new_fireflies[i] = np.clip(
-                        new_fireflies[i], self.val_min, self.val_max
-                    )
-
-        self.population = new_fireflies
-
-        best = np.argmin(intensities)
+        best = np.argmin(self.fitnesses)
         self.best_solution = self.population[best]
 
         print(f"\rIteration: {self.iteration}/{self.max_iterations} ", end="")
