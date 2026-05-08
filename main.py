@@ -29,10 +29,9 @@ def main():
     print(f"We ended with: ${usd}!")
 
     # Graph it
+    # This is the graph of the post 2020 data (unseen). If our bot makes money here, it has done very well :)
     bot.generate_signals(best_transformed, graph=True)
 
-    # bot.run_on_period(best_transformed, bot.price_history[:1858])
-    # bot.generate_signals(best_transformed, graph=True)
 
 if __name__ == "__main__":
     main()

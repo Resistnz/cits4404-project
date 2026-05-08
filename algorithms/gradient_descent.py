@@ -42,6 +42,3 @@ class GradientDescentOptimiser(Optimiser):
 
         if best < self.objective_function(self.best_solution):
             self.best_solution = best_pos
-
-    def objective_function(self, values):
-        return self.trading_bot.evaluate_parameters(values)
