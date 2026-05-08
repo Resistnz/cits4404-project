@@ -9,17 +9,17 @@ import numpy as np
 
 def main():
     bot = BetterBot() # This can be any TradingBot child class
-    optimiser = GWOOptimiser  ( # This can be any Optimiser child class
+    optimiser = FireflyOptimiser    ( # This can be any Optimiser child class
         dimensions=14, 
         trading_bot=bot, 
-        max_iterations=10, 
+        max_iterations=200, 
         val_min=-1,
         val_max=1,
         #step_size=(1/50)
-        num_wolves=40
-        # step_size=0.4,
-        # num_fireflies=30,
-        # light_absorption=0.2
+        #num_wolves=30
+        step_size=0.4,
+        num_fireflies=30,
+        light_absorption=0.2
         #seed=8008135
         )
 
