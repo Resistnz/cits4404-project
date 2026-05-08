@@ -30,8 +30,8 @@ class FireflyOptimiser(Optimiser):
     def update(self):
         self.iteration += 1
 
-        # quality of each firefly solution
-        intensities = np.apply_along_axis(self.objective_function, 1, self.fireflies)
+        # quality of each firefly solution (evaluated in parallel)
+        intensities = self.parallel_evaluate(self.fireflies)
 
         new_fireflies = self.fireflies.copy()
 
@@ -81,8 +81,8 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
     def update(self):
         self.iteration += 1
 
-        # quality of each firefly solution
-        intensities = np.apply_along_axis(self.objective_function, 1, self.fireflies)
+        # quality of each firefly solution (evaluated in parallel)
+        intensities = self.parallel_evaluate(self.fireflies)
 
         new_fireflies = self.fireflies.copy()
 
