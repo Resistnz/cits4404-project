@@ -8,31 +8,32 @@ class Signal(IntEnum):
 
 class TradingBot:
     def __init__(self):
-        self.P = self.load_price_history(start_time=1614556800, end_time=1646092800) # One year
-        #self.P = self.load_price_history(start_time=1643500800, end_time=1646092800) # 30 days
+        self.load_price_history()
 
-    @staticmethod
-    def load_price_history(start_time, end_time):
+        # Everything up until 2020 for training
+        self.P = self.price_history[:1858]
+
+    def load_price_history(self):
         filepath = "data/BTC-Daily.csv"
 
         data = np.genfromtxt(filepath, delimiter=',', skip_header=1)
         if data.size == 0:
-            P = np.array([])
+            self.price_history = np.array([])
         elif data.ndim > 1:
-            unix_times = data[:, 0]
-            mask = (unix_times >= start_time) & (unix_times <= end_time)
-            P = data[mask, 6]  # column 6 is 'close'
+            self.price_history = data[:, 6]  # column 6 is 'close'
         else:
-            P = np.array([])
+            self.price_history = np.array([])
 
         # Reverse it cause its backwards for some reason
-        P = P[::-1]
-
-        return P
+        self.price_history = self.price_history[::-1]
 
     @staticmethod
     def pad(P, N):
-        padding = -np.flip(P[1:N])
+        # initial windows use only available (past/current) data.
+        if N <= 1:
+            return P
+        
+        padding = np.full(N - 1, P[0])
         return np.append(padding, P)
     
     @staticmethod
@@ -42,6 +43,34 @@ class TradingBot:
     @staticmethod
     def wma(P, N, kernel):
         return np.convolve(TradingBot.pad(P,N), kernel, 'valid')    
+    
+    @staticmethod
+    def lma_filter(N):
+        """Generates a linear-weighted (triangular) filter."""
+        if N <= 0:
+            return np.array([])
+            
+        k = np.arange(N)
+        return (2 / (N + 1)) * (1 - k / N)
+
+    @staticmethod
+    def lma(P, N):
+        """Calculates the Linear-Weighted Moving Average (LMA)."""
+        return TradingBot.wma(P, N, TradingBot.lma_filter(N))
+
+    @staticmethod
+    def ema_filter(N, alpha):
+        """Generates an exponential decay filter."""
+        if N <= 0:
+            return np.array([])
+            
+        k = np.arange(N)
+        return alpha * ((1 - alpha) ** k)
+
+    @staticmethod
+    def ema(P, N, alpha):
+        """Calculates the Exponential Moving Average (EMA)."""
+        return TradingBot.wma(P, N, TradingBot.ema_filter(N, alpha))
     
     @staticmethod
     def graph_price(P, buy_signal):
@@ -86,14 +115,33 @@ class TradingBot:
 
         # Display the plot
         plt.show()
+
+    # Override this too if needed
+    def transform_weights(self, weights):
+        # This is where you can transform the raw weights from the optimiser (-1,1) into something usable for the bot
+        new_weights = list(weights)
+
+        return new_weights
     
     # Use the weights to run the bot, and then see if it makes money or not
     # Can override this with different scaling functions
     # Currently this is a minimiser
-    def evaluate_parameters(self, weights):
-        final_balance = self.run(weights) # One year
+    def evaluate_parameters(self, weights, num_trials=5):
+        # Scale the weights into something usable for the bot
+        transformed_weights = self.transform_weights(weights)
 
-        return 1000 - final_balance
+        # Run on different periods
+        total_balance = 0
+        for i in range(num_trials):
+            # set self.P to a random length (between 100 to 500) day period from day 0 to 1,858
+            start_index = np.random.randint(0, 1858 - 500)
+            end_index = start_index + np.random.randint(100, 500)
+            self.P = self.price_history[start_index:end_index]
+
+            total_balance += self.run(transformed_weights)
+
+        average_balance = total_balance / num_trials
+        return 1000 - average_balance # We minimise this
     
     # Override this
     def generate_signals(self, weights):

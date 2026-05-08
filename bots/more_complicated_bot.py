@@ -1,0 +1,52 @@
+import numpy as np
+from bots.bot import TradingBot, Signal
+
+# The better bot from p. 13 in the project outline
+class BetterBot(TradingBot):
+    def transform_weights(self, weights):
+        new_weights = list(weights)
+
+        # Transform weights to [-1,1] (allow negative for more flexibility)
+        new_weights[0] = np.tanh(weights[0])  # w1
+        new_weights[1] = np.tanh(weights[1])  # w2  
+        new_weights[2] = np.tanh(weights[2])  # w3
+
+        MIN_WINDOW_SIZE = 1
+        MAX_WINDOW_SIZE = 50
+
+        new_weights[3] = int((weights[3] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d1 from -1,1 to 1,50
+        new_weights[4] = int((weights[4] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d2
+        new_weights[5] = int((weights[5] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d3
+
+        # Alpha for EMA: [0,1]
+        new_weights[6] = 1 / (1 + np.exp(-weights[6]))  # a
+
+        return new_weights
+
+    # [w1, w2, w3, d1, d2, d3, a]
+    def generate_signals(self, weights, graph=False):
+        weights = self.transform_weights(weights)
+        sma20 = self.wma(self.P, 20, self.sma_filter(20))
+
+        # Eq. 7 from the project description
+        sma = self.wma(self.P, int(weights[3]), self.sma_filter(int(weights[3])))
+        lma = self.lma(self.P, int(weights[4]))
+        ema = self.ema(self.P, int(weights[5]), weights[6])
+        high = (weights[0]*sma + weights[1]*lma + weights[2]*ema)/np.sum(weights[:3])
+
+        sma_diff = high - sma20
+        sign_diff = np.sign(sma_diff)
+
+        kernel = np.array([0.5, -0.5])
+        buy_signal = np.convolve(sign_diff, kernel, mode='valid')
+
+        buy_signal_aligned = np.sign(buy_signal)  # normalize to -1,0,1
+
+        # Prepend a HOLD so signals align one-for-one with self.P
+        signals = [Signal.HOLD] + [Signal(int(x)) for x in buy_signal_aligned]
+
+        # Graph it if you want (convert signals to numeric array)
+        if graph:
+            TradingBot.graph_price(self.P, np.array([int(s) for s in signals]))
+
+        return signals
