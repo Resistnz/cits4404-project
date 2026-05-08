@@ -91,6 +91,13 @@ class BigBangBigCrunchOptimiser(Optimiser):
             self.objective_function, 1, self.population
         )
 
+        best = np.argmin(self.fitnesses)
+        self.best_solution = self.population[best]
+
+        if not self.calc_center_of_mass:
+            self.center_of_mass = self.best_solution
+            return
+
         sum_of_mass = 0
         sum_of_mass_points = 0
 
@@ -106,8 +113,5 @@ class BigBangBigCrunchOptimiser(Optimiser):
 
         self.big_bang()
         self.big_crunch()
-
-        best = np.argmin(self.fitnesses)
-        self.best_solution = self.population[best]
 
         print(f"\rIteration: {self.iteration}/{self.max_iterations} ", end="")
