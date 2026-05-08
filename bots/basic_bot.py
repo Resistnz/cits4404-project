@@ -1,6 +1,7 @@
 import numpy as np
 from bots.bot import TradingBot, Signal
 
+
 # The basic bot from p. 11 in the project outline
 class BasicBot(TradingBot):
     def transform_weights(self, weights):
@@ -23,7 +24,7 @@ class BasicBot(TradingBot):
         sign_diff = np.sign(sma_diff)
 
         kernel = np.array([0.5, -0.5])
-        buy_signal = np.convolve(sign_diff, kernel, mode='valid')
+        buy_signal = np.convolve(sign_diff, kernel, mode="valid")
 
         buy_signal_aligned = np.sign(buy_signal)  # normalize to -1,0,1
 

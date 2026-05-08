@@ -3,6 +3,7 @@ from bots.more_complicated_bot import BetterBot
 from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
 
+
 def main():
     bot = BetterBot() # This can be any TradingBot child class
     optimiser = FireflyOptimiser( # This can be any Optimiser child class
@@ -31,6 +32,7 @@ def main():
     # Graph it
     # This is the graph of the post 2020 data (unseen). If our bot makes money here, it has done very well :)
     bot.generate_signals(best_transformed, graph=True)
+
 
 
 if __name__ == "__main__":
