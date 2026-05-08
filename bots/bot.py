@@ -166,8 +166,7 @@ class TradingBot:
 
         total_days = 1858  # Before 2020
         # Leave the first 200 days as warm-up for the moving average windows,
-        # then slide a 120-day evaluation window every 30 days until the end.
-        # This produces ~35 folds vs the previous 4, making it ~9x harder to overfit.
+        # then slide a 120-day evaluation window every 30 days
         window_size = 120
         step_size = 30
         warm_up = 200
@@ -180,12 +179,12 @@ class TradingBot:
         fold_scores = []
         starting_capital = 1000.0
 
-        # Reward per completed BUY→SELL round trip (smooth gradient, no cliff edge).
+        # Reward per completed BUY/SELL round trip
         round_trip_incentive = 0.05
         round_trip_cap = 5
 
-        # Tiny per-signal penalty to weakly discourage excessive churn.
-        churn_penalty = 0.002
+        # discourage churning (buying/selling quickly)
+        churn_penalty = 0.005
 
         originalP = self.P
 
@@ -198,12 +197,11 @@ class TradingBot:
                 signal_count = sum(1 for s in signals if s != Signal.HOLD)
                 round_trips = self.count_round_trips(signals)
 
-                # Buy-and-hold benchmark on this window (same 3% fees).
+                # Buy-and-hold benchmark on this window (same 3% fees)
                 bh_btc = (starting_capital / validation_data[0]) * 0.97
                 bh_usd = max(bh_btc * validation_data[-1] * 0.97, 1e-8)
 
-                # Log excess return: zero for buy-and-hold, positive if we beat it.
-                # Symmetric across bull/bear windows. No division-by-near-zero noise.
+                # Log excess return: zero for buy-and-hold, positive if we beat it
                 log_excess = np.log(max(balance, 1e-8) / bh_usd)
 
                 rt_bonus = round_trip_incentive * min(round_trips, round_trip_cap)
@@ -215,51 +213,14 @@ class TradingBot:
 
         finally:
             self.P = originalP
-
-    def compute_daily_log_returns(self, values):
-        if len(values) < 2:
-            return np.array([0.0])
-        
-        # Ensure no non-positive values for log
-        safe_values = np.maximum(values, 1e-8)
-        returns = np.log(safe_values[1:] / safe_values[:-1])
-
-        return returns
-
-    def compute_sharpe_ratio(self, returns, risk_free_rate=0.0):
-        if len(returns) == 0 or np.std(returns) == 0:
-            return 0.0
-        
-        excess_returns = returns - risk_free_rate / 365 
-
-        return np.mean(excess_returns) / np.std(excess_returns)
-
-    def compute_max_drawdown(self, portfolio_values):
-        if len(portfolio_values) < 2:
-            return 0.0
-        
-        peak = portfolio_values[0]
-        max_dd = 0.0
-
-        for value in portfolio_values:
-            if value > peak:
-                peak = value
-
-            dd = (peak - value) / peak
-
-            if dd > max_dd:
-                max_dd = dd
-
-        return max_dd
     
     # Override this
     def generate_signals(self, weights):
-        signals = [Signal.HOLD] * len(self.P)  # A signal for each time, either
+        signals = [Signal.HOLD] * len(self.P)
 
         return signals
     
     def count_round_trips(self, signals):
-        """Count completed BUY→SELL round trips."""
         in_position = False
         round_trips = 0
         for s in signals:
@@ -269,29 +230,6 @@ class TradingBot:
                 in_position = False
                 round_trips += 1
         return round_trips
-
-    def compute_holding_streaks(self, signals):
-        """Compute the lengths of holding periods after each BUY until SELL."""
-        streaks = []
-        holding = False
-        streak = 0
-        for signal in signals:
-            if signal == Signal.BUY:
-                if holding:
-                    streaks.append(streak)
-                holding = True
-                streak = 0
-            elif signal == Signal.SELL:
-                if holding:
-                    streaks.append(streak)
-                holding = False
-                streak = 0
-            elif signal == Signal.HOLD and holding:
-                streak += 1
-        # If still holding at the end, count it
-        if holding:
-            streaks.append(streak)
-        return streaks
     
     # Simulate a whole run of the bot
     def run(self, weights):

@@ -6,11 +6,13 @@ from bots.basic_bot import BasicBot
 from bots.more_complicated_bot import BetterBot
 from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
+from algorithms.gwo import GWOOptimiser
+from algorithms.big_bang_big_crunch import BigBangBigCrunchOptimiser
 
 STARTING_CAPITAL = 1000.0
 HOLDOUT_START_INDEX = 1858
 MAX_ITERATIONS = 50
-FIRELY_POPULATION = 60
+POPULATION_SIZE = 60
 SAMPLE_COUNT = 20
 SEED = 80085
 
@@ -23,7 +25,7 @@ BOT_CONFIGS = [
     {
         "name": "BetterBot",
         "class": BetterBot,
-        "dimensions": 7,
+        "dimensions": 14,
     },
 ]
 
@@ -46,7 +48,7 @@ OPTIMISER_CONFIGS = [
         "name": "FireflyOptimiser",
         "class": FireflyOptimiser,
         "factory": lambda bot, dims: FireflyOptimiser(
-            num_fireflies=FIRELY_POPULATION,
+            num_fireflies=POPULATION_SIZE,
             dimensions=dims,
             light_absorption=0.2,
             step_size=0.2,
@@ -61,7 +63,7 @@ OPTIMISER_CONFIGS = [
     #     "name": "ImprovedFireflyOptimiser",
     #     "class": ImprovedFireflyOptimiser,
     #     "factory": lambda bot, dims: ImprovedFireflyOptimiser(
-    #         num_fireflies=FIRELY_POPULATION,
+    #         num_fireflies=POPULATION_SIZE,
     #         dimensions=dims,
     #         light_absorption=0.2,
     #         step_size=0.2,
@@ -72,6 +74,30 @@ OPTIMISER_CONFIGS = [
     #         seed=SEED,
     #     ),
     # },
+    {
+        "name": "GWOOptimiser",
+        "class": GWOOptimiser,
+        "factory": lambda bot, dims: GWOOptimiser(
+            num_wolves=POPULATION_SIZE,
+            dimensions=dims,
+            max_iterations=MAX_ITERATIONS,
+            trading_bot=bot,
+            val_min=-1,
+            val_max=1,
+        ),
+    },
+    {
+        "name": "BigBangBigCrunchOptimiser",
+        "class": BigBangBigCrunchOptimiser,
+        "factory": lambda bot, dims: BigBangBigCrunchOptimiser(
+            dimensions=dims,
+            population_size=POPULATION_SIZE,
+            max_iterations=MAX_ITERATIONS,
+            trading_bot=bot,
+            val_min=-1,
+            val_max=1,
+        ),
+    },
 ]
 
 
@@ -87,7 +113,7 @@ def calculate_returns_variance(portfolio_values: np.ndarray) -> float:
 
 
 def evaluate_holdout_performance(bot, weights):
-    final_balance, portfolio_values = bot.run_on_period(weights, bot.price_history[HOLDOUT_START_INDEX:])
+    final_balance, portfolio_values, _ = bot.run_on_period(weights, bot.price_history[HOLDOUT_START_INDEX:])
     profit = final_balance - STARTING_CAPITAL
     variance = calculate_returns_variance(np.asarray(portfolio_values, dtype=float))
     return {
@@ -126,9 +152,9 @@ def run_all_benchmarks():
         bot.dimensions = bot_config["dimensions"]
         bot_name = bot_config["name"]
 
-        print("\n" + "=" * 90)
+        print("\n" + "=" * 110)
         print(f"Benchmarking TradingBot: {bot_name}")
-        print("=" * 90)
+        print("=" * 110)
         print(
             f"Shared iteration budget: {MAX_ITERATIONS} | "
             f"Holdout start index: {HOLDOUT_START_INDEX} | "
@@ -136,7 +162,7 @@ def run_all_benchmarks():
         )
         print(
             "Optimiser                        | Iter | Runtime   | Objective   | Profit    | Return %  | Variance"
-            "\n" + "-" * 90
+            "\n" + "-" * 110
         )
 
         for optimizer_config in OPTIMISER_CONFIGS:
@@ -176,3 +202,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

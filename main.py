@@ -12,11 +12,11 @@ def main():
     optimiser = GWOOptimiser  ( # This can be any Optimiser child class
         dimensions=14, 
         trading_bot=bot, 
-        max_iterations=100, 
+        max_iterations=10, 
         val_min=-1,
         val_max=1,
         #step_size=(1/50)
-        num_wolves=50
+        num_wolves=40
         # step_size=0.4,
         # num_fireflies=30,
         # light_absorption=0.2
@@ -56,4 +56,7 @@ For Better Bot:
 Best solution found: [-0.67944, -0.687918, -0.521329, 12.0, 14.0, 11.0, 0.670732, -0.604257, 0.212866, -0.492989, 44.0, 24.0, 43.0, 0.324713] with objective value: -0.020392201829341015
 Raw best solution: [-0.828073, -0.843993, -0.578162, 0.179095, 0.415353, 0.062571, 0.670732, -0.699826, 0.216172, -0.540002, 0.679143, -0.453247, 0.643049, -0.732196]
 We ended with: $5628.710705540577 on post 2020 data!
+
+crazy overfit:
+[0.586068, 0.167405, 0.061332, 0.756782, -0.855786, 0.076329, 0.888863, -0.727061, 0.438095, -0.035268, -0.639324, -0.101507, -0.006211, -0.534552] (Objective value: -0.0613)
 """
