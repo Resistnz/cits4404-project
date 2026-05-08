@@ -2,19 +2,23 @@ from bots.basic_bot import BasicBot
 from bots.more_complicated_bot import BetterBot
 from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
-
+from algorithms.gwo import GWOOptimiser
+from algorithms.big_bang_big_crunch import BigBangBigCrunchOptimiser
+from algorithms.bruteforce import BruteForce
 
 def main():
-    bot = BetterBot() # This can be any TradingBot child class
-    optimiser = FireflyOptimiser( # This can be any Optimiser child class
-        dimensions=7, 
+    bot = BasicBot() # This can be any TradingBot child class
+    optimiser = BruteForce( # This can be any Optimiser child class
+        dimensions=2, 
         trading_bot=bot, 
-        max_iterations=50, 
-        step_size=0.2,
+        max_iterations=1, 
         val_min=-1,
         val_max=1,
-        num_fireflies=60,
-        light_absorption=0.2
+        decimal_places=2
+        #num_wolves=30
+        # step_size=0.2,
+        # num_fireflies=60,
+        # light_absorption=0.2
         #seed=8008135
         )
 
