@@ -20,26 +20,22 @@ class GradientDescentOptimiser(Optimiser):
     def update(self):
         self.iteration += 1
 
-        best = np.inf
-        best_pos = None
+        # Generate all sample positions at once
+        perturbations = self.step_size * np.random.uniform(-1, 1, (self.sample_count, len(self.pos)))
+        samples = np.clip(self.pos + perturbations, self.val_min, self.val_max)
 
-        # Take a sample of random points and move in the best direction
-        for i in range(self.sample_count):
-            newPos = self.pos + self.step_size * np.random.uniform(-1, 1, len(self.pos))
-            newPos = np.clip(newPos, self.val_min, self.val_max)
+        # Evaluate all samples in parallel
+        fitnesses = self.parallel_evaluate(samples)
 
-            if self.objective_function(newPos) < best:
-                best = self.objective_function(newPos)
-                best_pos = newPos
-
-            #if self.iteration < 4:
-               #print(f"Sample {i+1}/{self.sample_count} - Position: {newPos} - Objective value: {self.objective_function(newPos)}")
-
-        #print(f"\rIteration {self.iteration}/{self.max_iterations} - Best solution: {best_pos} - Objective value: {best}", end="")
+        best_idx = np.argmin(fitnesses)
+        best = fitnesses[best_idx]
+        best_pos = samples[best_idx]
 
         # Move there if better
-        if best < self.objective_function(self.pos):
+        current_fitness = self.objective_function(self.pos)
+        if best < current_fitness:
             self.pos = best_pos
 
-        if best < self.objective_function(self.best_solution):
+        best_solution_fitness = self.objective_function(self.best_solution)
+        if best < best_solution_fitness:
             self.best_solution = best_pos

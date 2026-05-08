@@ -162,123 +162,77 @@ class TradingBot:
     # Use the weights to run the bot, and then see if it makes money or not
     # Currently this is a minimiser
     def evaluate_parameters(self, weights, num_trials=5):
-        # Scale the weights into something usable for the bot
         transformed_weights = self.transform_weights(weights)
 
-        # Walk-forward validation setup
-        total_days = 1858 # Before 2020
-        initial_train_days = 600
-        validation_fold_days = (total_days - initial_train_days) // 4  # about 300 days per fold
+        total_days = 1858  # Before 2020
+        # Leave the first 200 days as warm-up for the moving average windows,
+        # then slide a 120-day evaluation window every 30 days
+        window_size = 120
+        step_size = 30
+        warm_up = 200
 
-        folds = []
-        start = initial_train_days
-        for i in range(4):
-            end = min(start + validation_fold_days, total_days)
-            folds.append((start, end))
-            start = end
+        sliding_folds = [
+            (start, start + window_size)
+            for start in range(warm_up, total_days - window_size, step_size)
+        ]
 
-        # Evaluate on each validation fold
         fold_scores = []
         starting_capital = 1000.0
-        drawdown_penalty = 0.0
-        trade_penalty = 1.0
-        holding_penalty = 0.1  # Penalise long holding periods
 
-        for fold_start, fold_end in folds:
-            validation_data = self.price_history[fold_start:fold_end]
+        # Reward per completed BUY/SELL round trip
+        round_trip_incentive = 0.05
+        round_trip_cap = 5
 
-            balance, portfolio_values = self.run_on_period(transformed_weights, validation_data)
-            max_dd = self.compute_max_drawdown(portfolio_values)
+        # discourage churning (buying/selling quickly)
+        churn_penalty = 0.005
 
-            # Profit after fees is the primary metric, with risk penalty for drawdown.
-            profit = balance - starting_capital
-            score = profit - drawdown_penalty * max_dd * starting_capital
+        originalP = self.P
 
-            # Penalise excessive trading under fixed fees.
-            signals = self.generate_signals(transformed_weights)
-            trade_count = int(np.count_nonzero(signals))
-            score -= trade_penalty * trade_count
+        try:
+            for fold_start, fold_end in sliding_folds:
+                validation_data = self.price_history[fold_start:fold_end]
 
-            # Penalise long holding periods
-            holding_streaks = self.compute_holding_streaks(signals)
-            if holding_streaks:
-                avg_holding = np.mean(holding_streaks)
-                score -= holding_penalty * avg_holding
+                balance, _, signals = self.run_on_period(transformed_weights, validation_data)
 
-            fold_scores.append(score)
+                signal_count = sum(1 for s in signals if s != Signal.HOLD)
+                round_trips = self.count_round_trips(signals)
 
-        average_score = np.mean(fold_scores)
-        return -average_score  # We minimise using the same optimiser interface
+                # Buy-and-hold benchmark on this window (same 3% fees)
+                bh_btc = (starting_capital / validation_data[0]) * 0.97
+                bh_usd = max(bh_btc * validation_data[-1] * 0.97, 1e-8)
 
-    def compute_daily_log_returns(self, values):
-        if len(values) < 2:
-            return np.array([0.0])
-        
-        # Ensure no non-positive values for log
-        safe_values = np.maximum(values, 1e-8)
-        returns = np.log(safe_values[1:] / safe_values[:-1])
+                # Log excess return: zero for buy-and-hold, positive if we beat it
+                log_excess = np.log(max(balance, 1e-8) / bh_usd)
 
-        return returns
+                rt_bonus = round_trip_incentive * min(round_trips, round_trip_cap)
+                score = log_excess + rt_bonus - churn_penalty * signal_count
 
-    def compute_sharpe_ratio(self, returns, risk_free_rate=0.0):
-        if len(returns) == 0 or np.std(returns) == 0:
-            return 0.0
-        
-        excess_returns = returns - risk_free_rate / 365 
+                fold_scores.append(score)
 
-        return np.mean(excess_returns) / np.std(excess_returns)
+            return -np.mean(fold_scores)
 
-    def compute_max_drawdown(self, portfolio_values):
-        if len(portfolio_values) < 2:
-            return 0.0
-        
-        peak = portfolio_values[0]
-        max_dd = 0.0
-
-        for value in portfolio_values:
-            if value > peak:
-                peak = value
-
-            dd = (peak - value) / peak
-
-            if dd > max_dd:
-                max_dd = dd
-
-        return max_dd
+        finally:
+            self.P = originalP
     
     # Override this
     def generate_signals(self, weights):
-        signals = [Signal.HOLD] * len(self.P)  # A signal for each time, either
+        signals = [Signal.HOLD] * len(self.P)
 
         return signals
     
-    def compute_holding_streaks(self, signals):
-        """Compute the lengths of holding periods after each BUY until SELL."""
-        streaks = []
-        holding = False
-        streak = 0
-        for signal in signals:
-            if signal == Signal.BUY:
-                if holding:
-                    streaks.append(streak)
-                holding = True
-                streak = 0
-            elif signal == Signal.SELL:
-                if holding:
-                    streaks.append(streak)
-                holding = False
-                streak = 0
-            elif signal == Signal.HOLD and holding:
-                streak += 1
-        # If still holding at the end, count it
-        if holding:
-            streaks.append(streak)
-        return streaks
+    def count_round_trips(self, signals):
+        in_position = False
+        round_trips = 0
+        for s in signals:
+            if s == Signal.BUY and not in_position:
+                in_position = True
+            elif s == Signal.SELL and in_position:
+                in_position = False
+                round_trips += 1
+        return round_trips
     
-    # Simulate a whole run of the bot 
+    # Simulate a whole run of the bot
     def run(self, weights):
-        # print("Starting with $1000 USD")
-
         usd = 1000
         bitcoin = 0
         transaction_fee = 0.97
@@ -310,11 +264,11 @@ class TradingBot:
             usd = bitcoin * self.P[len(signals)-1] * transaction_fee
             portfolio_values[-1] = usd  # Update last value
 
-        return usd, portfolio_values
+        return usd, portfolio_values, signals
     
     # Run on a specific period
     def run_on_period(self, weights, period_data):
         self.P = period_data
-        balance, portfolio_values = self.run(weights)
-        
-        return balance, portfolio_values
+        balance, portfolio_values, signals = self.run(weights)
+
+        return balance, portfolio_values, signals
