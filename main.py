@@ -9,17 +9,17 @@ import numpy as np
 
 def main():
     bot = BetterBot() # This can be any TradingBot child class
-    optimiser = FireflyOptimiser( # This can be any Optimiser child class
+    optimiser = GWOOptimiser  ( # This can be any Optimiser child class
         dimensions=14, 
         trading_bot=bot, 
-        max_iterations=50, 
+        max_iterations=100, 
         val_min=-1,
         val_max=1,
         #step_size=(1/50)
-        #num_wolves=30
-        step_size=0.4,
-        num_fireflies=200,
-        light_absorption=0.2
+        num_wolves=50
+        # step_size=0.4,
+        # num_fireflies=30,
+        # light_absorption=0.2
         #seed=8008135
         )
 
@@ -29,7 +29,6 @@ def main():
     # Check our best solution
     test_particular_solution(bot, optimiser.best_solution)
 
-# [np.float64(-0.746707890411129), np.float64(-0.3894777707411653), np.float64(-0.4544590197176597), 2, 3, 5, np.float64(0.49780712473668337)]
 def test_particular_solution(bot, solution):
     print()
     best_transformed = bot.transform_weights(solution)
@@ -37,7 +36,7 @@ def test_particular_solution(bot, solution):
     print(f"Best solution found: {[float(round(x, 6)) for x in best_transformed]} with objective value: {bot.evaluate_parameters(solution)}")
     print(f"Raw best solution: {[float(round(x, 6)) for x in solution]}")
 
-    usd, _ = bot.run_on_period(best_transformed, bot.price_history[1858:]) # Run on time after 2020 (holdout testing)
+    usd, _, _ = bot.run_on_period(best_transformed, bot.price_history[1858:]) # Run on time after 2020 (holdout testing)
     print(f"We ended with: ${usd} on post 2020 data!")
 
     # Graph it
@@ -45,11 +44,16 @@ def test_particular_solution(bot, solution):
     bot.generate_signals(best_transformed, graph=True)
 
 if __name__ == "__main__":
-    #test_particular_solution(BetterBot(), [0.979046, -0.980954, 1.0, -0.723163, 0.406437, 0.226748, 0.38846, -0.748922, -0.157238, 0.295489, -0.245239, 1.0, -0.869922, 0.620778])
     main()
 
 """
+For Basic Bot:
 Best solution found: [11.0, 39.0] with objective value: -888.7426911231121
-Raw best solution: [-0.56, 0.56]
+Raw best solution: [-0.56, 0.56] ([5.0, 0, 0, 0.0526, 0, 0, 0, 5.0, 0, 0, 0.3714, 0, 0, 0] for BetterBot)
 We ended with: $4513.577454938214! (on post 2020 data)
+
+For Better Bot:
+Best solution found: [-0.67944, -0.687918, -0.521329, 12.0, 14.0, 11.0, 0.670732, -0.604257, 0.212866, -0.492989, 44.0, 24.0, 43.0, 0.324713] with objective value: -0.020392201829341015
+Raw best solution: [-0.828073, -0.843993, -0.578162, 0.179095, 0.415353, 0.062571, 0.670732, -0.699826, 0.216172, -0.540002, 0.679143, -0.453247, 0.643049, -0.732196]
+We ended with: $5628.710705540577 on post 2020 data!
 """

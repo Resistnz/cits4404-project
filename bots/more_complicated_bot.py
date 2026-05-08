@@ -10,9 +10,9 @@ class BetterBot(TradingBot):
         new_weights[0] = np.tanh(weights[0])  # w1
         new_weights[1] = np.tanh(weights[1])  # w2  
         new_weights[2] = np.tanh(weights[2])  # w3
-        new_weights[7] = np.tanh(weights[0])  # w4
-        new_weights[8] = np.tanh(weights[1])  # w5  
-        new_weights[9] = np.tanh(weights[2])  # w6
+        new_weights[7] = np.tanh(weights[7])  # w4
+        new_weights[8] = np.tanh(weights[8])  # w5  
+        new_weights[9] = np.tanh(weights[9])  # w6
 
         # High frequency window
         MIN_WINDOW_SIZE = 1
@@ -31,15 +31,12 @@ class BetterBot(TradingBot):
         new_weights[12] = int((weights[12] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d6
 
         # Alpha for EMA: [0,1]
-        new_weights[13] = 1 / (1 + np.exp(-weights[6]))  # a
+        new_weights[13] = 1 / (1 + np.exp(-weights[13]))  # a
 
         return new_weights
 
     # [w1, w2, w3, d1, d2, d3, a1, w4, w5, w6, d4, d5, d6, a2]
     def generate_signals(self, weights, graph=False):
-        weights = self.transform_weights(weights)
-        #sma20 = self.wma(self.P, 20, self.sma_filter(20))
-
         # Eq. 7 from the project description
         sma = self.wma(self.P, int(weights[3]), self.sma_filter(int(weights[3])))
         lma = self.lma(self.P, int(weights[4]))
@@ -49,7 +46,7 @@ class BetterBot(TradingBot):
         sma = self.wma(self.P, int(weights[10]), self.sma_filter(int(weights[10])))
         lma = self.lma(self.P, int(weights[11]))
         ema = self.ema(self.P, int(weights[12]), weights[13])
-        low = (weights[7]*sma + weights[8]*lma + weights[7]*ema)/np.sum(weights[7:10])
+        low = (weights[7]*sma + weights[8]*lma + weights[9]*ema)/np.sum(weights[7:10])
 
         sma_diff = high - low
         sign_diff = np.sign(sma_diff)
