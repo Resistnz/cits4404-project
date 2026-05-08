@@ -25,3 +25,5 @@ class Optimiser:
     def run(self) -> None:
         while not self.termination_criteria_reached():
             self.update()
+
+            print(f"Iteration {self.iteration} - Best solution: {self.best_solution} - Objective value: {self.objective_function(self.best_solution)}", end='\r')
