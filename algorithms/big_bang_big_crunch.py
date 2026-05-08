@@ -45,9 +45,15 @@ class BigBangBigCrunchOptimiser(Optimiser):
         Returns:
             numpy.ndarray: The coordinates of the new point.
         """
+        deviation = self.val_max * np.random.normal(size=self.dimensions)
+
+        if not self.deviation_fixed:
+            deviation /= self.iteration
+
+        new_point = self.center_of_mass + deviation
+
         return np.clip(
-            self.center_of_mass
-            + (self.val_max * np.random.normal(size=self.dimensions)) / self.iteration,
+            new_point,
             self.val_min,
             self.val_max,
         )
