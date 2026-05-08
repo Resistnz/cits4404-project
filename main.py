@@ -4,16 +4,16 @@ from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
 
 def main():
-    bot = BasicBot() # This can be any TradingBot child class
-    optimiser = GradientDescentOptimiser( # This can be any Optimiser child class
-        dimensions=2, 
+    bot = BetterBot() # This can be any TradingBot child class
+    optimiser = FireflyOptimiser( # This can be any Optimiser child class
+        dimensions=7, 
         trading_bot=bot, 
-        max_iterations=100, 
-        step_size=0.01,
+        max_iterations=50, 
+        step_size=0.2,
         val_min=-1,
         val_max=1,
-        # num_fireflies=30,
-        # light_absorption=0.2
+        num_fireflies=60,
+        light_absorption=0.2
         #seed=8008135
         )
 
@@ -22,14 +22,17 @@ def main():
 
     # Check our best solution
     print()
-    print(f"Best solution found: {optimiser.best_solution}")
+    best_transformed = bot.transform_weights(optimiser.best_solution)
+    print(f"Best solution found: {best_transformed} with objective value: {optimiser.objective_function(optimiser.best_solution)}")
 
-    usd, _ = bot.run_on_period(optimiser.best_solution, bot.price_history[1858:]) # Run on time after 2020 (holdout testing)
+    usd, _ = bot.run_on_period(best_transformed, bot.price_history[1858:]) # Run on time after 2020 (holdout testing)
     print(f"We ended with: ${usd}!")
 
     # Graph it
-   # bot.generate_signals(optimiser.best_solution, graph=True)
+    bot.generate_signals(best_transformed, graph=True)
 
+    # bot.run_on_period(best_transformed, bot.price_history[:1858])
+    # bot.generate_signals(best_transformed, graph=True)
 
 if __name__ == "__main__":
     main()

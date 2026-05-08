@@ -15,6 +15,7 @@ class GradientDescentOptimiser(Optimiser):
         self.pos = np.random.uniform(self.val_min, self.val_max, dimensions)
         self.best_solution = self.pos.copy()
 
+    # TODO: Make it do objective function less
     def update(self):
         self.iteration += 1
 
@@ -30,8 +31,10 @@ class GradientDescentOptimiser(Optimiser):
                 best = self.objective_function(newPos)
                 best_pos = newPos
 
-            if self.iteration < 4:
-                print(f"Sample {i+1}/{self.sample_count} - Position: {newPos} - Objective value: {self.objective_function(newPos)}")
+            #if self.iteration < 4:
+               #print(f"Sample {i+1}/{self.sample_count} - Position: {newPos} - Objective value: {self.objective_function(newPos)}")
+
+        #print(f"\rIteration {self.iteration}/{self.max_iterations} - Best solution: {best_pos} - Objective value: {best}", end="")
 
         # Move there if better
         if best < self.objective_function(self.pos):
@@ -39,7 +42,6 @@ class GradientDescentOptimiser(Optimiser):
 
         if best < self.objective_function(self.best_solution):
             self.best_solution = best_pos
-
 
     def objective_function(self, values):
         return self.trading_bot.evaluate_parameters(values)

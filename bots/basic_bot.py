@@ -16,7 +16,6 @@ class BasicBot(TradingBot):
 
     # [d1, d2]
     def generate_signals(self, weights, graph=False):
-        weights = self.transform_weights(weights)
         smaA = self.wma(self.P, int(weights[0]), self.sma_filter(int(weights[0])))
         smaB = self.wma(self.P, int(weights[1]), self.sma_filter(int(weights[1])))
 

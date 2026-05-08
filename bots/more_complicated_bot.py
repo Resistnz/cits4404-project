@@ -12,7 +12,7 @@ class BetterBot(TradingBot):
         new_weights[2] = np.tanh(weights[2])  # w3
 
         MIN_WINDOW_SIZE = 1
-        MAX_WINDOW_SIZE = 50
+        MAX_WINDOW_SIZE = 10
 
         new_weights[3] = int((weights[3] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d1 from -1,1 to 1,50
         new_weights[4] = int((weights[4] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d2

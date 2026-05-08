@@ -143,26 +143,36 @@ class TradingBot:
 
         # Evaluate on each validation fold
         fold_scores = []
+        starting_capital = 1000.0
+        drawdown_penalty = 0.0
+        trade_penalty = 1.0
+        holding_penalty = 0.1  # Penalise long holding periods
+
         for fold_start, fold_end in folds:
-            # Use cumulative training data up to this fold
-            train_end = fold_start
             validation_data = self.price_history[fold_start:fold_end]
 
-            # Run bot on validation data
             balance, portfolio_values = self.run_on_period(transformed_weights, validation_data)
-
-            # Compute metrics for this fold from portfolio returns
-            returns = self.compute_daily_log_returns(portfolio_values)
-            sharpe = self.compute_sharpe_ratio(returns)
             max_dd = self.compute_max_drawdown(portfolio_values)
 
-            # Score: Sharpe minus penalty for drawdown
-            penalty = 0.1 
-            score = sharpe - penalty * max_dd
+            # Profit after fees is the primary metric, with risk penalty for drawdown.
+            profit = balance - starting_capital
+            score = profit - drawdown_penalty * max_dd * starting_capital
+
+            # Penalise excessive trading under fixed fees.
+            signals = self.generate_signals(transformed_weights)
+            trade_count = int(np.count_nonzero(signals))
+            score -= trade_penalty * trade_count
+
+            # Penalise long holding periods
+            holding_streaks = self.compute_holding_streaks(signals)
+            if holding_streaks:
+                avg_holding = np.mean(holding_streaks)
+                score -= holding_penalty * avg_holding
+
             fold_scores.append(score)
 
         average_score = np.mean(fold_scores)
-        return -average_score  # We minimising
+        return -average_score  # We minimise using the same optimiser interface
 
     def compute_daily_log_returns(self, values):
         if len(values) < 2:
@@ -197,7 +207,7 @@ class TradingBot:
 
             if dd > max_dd:
                 max_dd = dd
-                
+
         return max_dd
     
     # Override this
@@ -205,6 +215,29 @@ class TradingBot:
         signals = [Signal.HOLD] * len(self.P) # A signal for each time, either 
 
         return signals
+    
+    def compute_holding_streaks(self, signals):
+        """Compute the lengths of holding periods after each BUY until SELL."""
+        streaks = []
+        holding = False
+        streak = 0
+        for signal in signals:
+            if signal == Signal.BUY:
+                if holding:
+                    streaks.append(streak)
+                holding = True
+                streak = 0
+            elif signal == Signal.SELL:
+                if holding:
+                    streaks.append(streak)
+                holding = False
+                streak = 0
+            elif signal == Signal.HOLD and holding:
+                streak += 1
+        # If still holding at the end, count it
+        if holding:
+            streaks.append(streak)
+        return streaks
     
     # Simulate a whole run of the bot 
     def run(self, weights):
