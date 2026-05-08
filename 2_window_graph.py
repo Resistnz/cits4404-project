@@ -17,25 +17,40 @@ def plot_2d_window_space(bot, val_min=1, val_max=50, step=1):
 
     total = X.shape[0] * X.shape[1]
     count = 0
+
+    best = np.inf
+    best_obj = []
     
     print(f"Evaluating {total} parameter combinations...")
     for i in range(X.shape[0]):
         for j in range(X.shape[1]):
-            Z[i, j] = bot.evaluate_parameters([X[i, j], Y[i, j]])
+            # Convert the range 1 to 50 into -1 to 1
+            converted_x = (X[i, j] - 25) / 25
+            converted_y = (Y[i, j] - 25) / 25
+
+            Z[i, j] = bot.evaluate_parameters([converted_x, converted_y])
+
             count += 1
             if count % 50 == 0:
-                print(f"  Progress: {count}/{total}")
+                print(f"  Progress: {count}/{total}", end="\r", flush=True)
+
+            if Z[i, j] < best:
+                best = Z[i, j]
+                best_obj = [X[i, j], Y[i, j]]
 
     # Create 3D surface plot
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111, projection='3d')
 
-    surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8, edgecolor='none')
+    surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=1, edgecolor='none')
     
     ax.set_xlabel('SMA Window Size 1')
     ax.set_ylabel('SMA Window Size 2')
     ax.set_zlabel('Objective Function Value')
     ax.set_title('BasicBot Objective Function Landscape (1-50 Window Range)')
+
+    # print the best config with best objective score
+    print(f"\nBest configuration: Window1={best_obj[0]}, Window2={best_obj[1]} with score: {best}")
     
     fig.colorbar(surf, ax=ax, label='Objective Value')
     plt.show()

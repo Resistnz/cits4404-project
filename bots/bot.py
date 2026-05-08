@@ -170,7 +170,7 @@ class TradingBot:
         initial_train_days = 600
         validation_fold_days = (total_days - initial_train_days) // 4  # about 300 days per fold
 
-        folds = []
+        folds = [(50, initial_train_days)] # Make sure we populate the window before we start
         start = initial_train_days
         for i in range(4):
             end = min(start + validation_fold_days, total_days)
@@ -184,31 +184,40 @@ class TradingBot:
         trade_penalty = 1.0
         holding_penalty = 0.1  # Penalise long holding periods
 
-        for fold_start, fold_end in folds:
-            validation_data = self.price_history[fold_start:fold_end]
+        originalP = self.P
 
-            balance, portfolio_values = self.run_on_period(transformed_weights, validation_data)
-            max_dd = self.compute_max_drawdown(portfolio_values)
+        try:
+            for fold_start, fold_end in folds:
+                validation_data = self.price_history[fold_start:fold_end]
 
-            # Profit after fees is the primary metric, with risk penalty for drawdown.
-            profit = balance - starting_capital
-            score = profit - drawdown_penalty * max_dd * starting_capital
+                balance, portfolio_values = self.run_on_period(transformed_weights, validation_data)                
+                max_dd = self.compute_max_drawdown(portfolio_values)
 
-            # Penalise excessive trading under fixed fees.
-            signals = self.generate_signals(transformed_weights)
-            trade_count = int(np.count_nonzero(signals))
-            score -= trade_penalty * trade_count
+                # Profit after fees is the primary metric, with risk penalty for drawdown
+                profit = balance - starting_capital
+                score = profit - drawdown_penalty * max_dd * starting_capital
 
-            # Penalise long holding periods
-            holding_streaks = self.compute_holding_streaks(signals)
-            if holding_streaks:
-                avg_holding = np.mean(holding_streaks)
-                score -= holding_penalty * avg_holding
+                # Penalise excessive trading under fixed fees
+                signals = self.generate_signals(transformed_weights)
 
-            fold_scores.append(score)
+                trades = np.count_nonzero(signals) / 2
 
-        average_score = np.mean(fold_scores)
-        return -average_score  # We minimise using the same optimiser interface
+
+                trade_count = int(np.count_nonzero(signals))
+                score -= trade_penalty * trade_count
+
+                # Penalise long holding periods
+                holding_streaks = self.compute_holding_streaks(signals)
+                if holding_streaks:
+                    avg_holding = np.mean(holding_streaks)
+                    score -= holding_penalty * avg_holding
+
+                fold_scores.append(score)
+            
+            return -np.mean(fold_scores)
+        
+        finally:
+            self.P = originalP
 
     def compute_daily_log_returns(self, values):
         if len(values) < 2:
