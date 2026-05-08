@@ -5,8 +5,11 @@ import numpy as np
 from algorithms.benchmarks import functions
 
 class FireflyOptimiser(Optimiser):
-    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", trading_bot=None, val_min=-1, val_max=1):
+    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", trading_bot=None, val_min=-1, val_max=1, seed=None):
         super().__init__(max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
+
+        if seed is not None:
+            np.random.seed(seed)
 
         self.n = num_fireflies
         self.D = dimensions
@@ -51,10 +54,10 @@ class FireflyOptimiser(Optimiser):
 
 class ImprovedFireflyOptimiser(FireflyOptimiser):
     def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, 
-                       min_brightness=0.1, w_start=0.9, w_end=0.4, theta=0.1, trading_bot=None, val_min=-1, val_max=1):
+                       min_brightness=0.1, w_start=0.9, w_end=0.4, theta=0.1, trading_bot=None, val_min=-1, val_max=1, seed=None):
         
         super().__init__(num_fireflies=num_fireflies, dimensions=dimensions, light_absorption=light_absorption, 
-                         step_size=step_size, max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
+                         step_size=step_size, max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max, seed=seed)
 
         self.b_min = min_brightness
 

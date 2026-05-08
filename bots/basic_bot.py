@@ -9,8 +9,8 @@ class BasicBot(TradingBot):
         MIN_WINDOW_SIZE = 1
         MAX_WINDOW_SIZE = 50
 
-        new_weights[0] = int((weights[0] + 1) * MAX_WINDOW_SIZE) + MIN_WINDOW_SIZE # d1 from -1,1 to 1,50
-        new_weights[1] = int((weights[1] + 1) * MAX_WINDOW_SIZE) + MIN_WINDOW_SIZE # d2 from -1,1 to 1,50
+        new_weights[0] = int((weights[0] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d1 from -1,1 to 1,50
+        new_weights[1] = int((weights[1] + 1) * (MAX_WINDOW_SIZE - MIN_WINDOW_SIZE) / 2 + MIN_WINDOW_SIZE)  # d2
 
         return new_weights
 

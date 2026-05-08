@@ -3,8 +3,11 @@ import numpy as np
 
 # Super basic SSO optimiser
 class GradientDescentOptimiser(Optimiser):
-    def __init__(self, dimensions, step_size=0.01, max_iterations=1000, sample_count=10, trading_bot=None, val_min=-1, val_max=1):
+    def __init__(self, dimensions, step_size=0.01, max_iterations=1000, sample_count=10, trading_bot=None, val_min=-1, val_max=1, seed=None):
         super().__init__(max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
+
+        if seed is not None:
+            np.random.seed(seed)
 
         self.step_size = step_size
         self.sample_count = sample_count
@@ -27,12 +30,16 @@ class GradientDescentOptimiser(Optimiser):
                 best = self.objective_function(newPos)
                 best_pos = newPos
 
+            if self.iteration < 4:
+                print(f"Sample {i+1}/{self.sample_count} - Position: {newPos} - Objective value: {self.objective_function(newPos)}")
+
         # Move there if better
         if best < self.objective_function(self.pos):
             self.pos = best_pos
 
         if best < self.objective_function(self.best_solution):
             self.best_solution = best_pos
+
 
     def objective_function(self, values):
         return self.trading_bot.evaluate_parameters(values)

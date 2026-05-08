@@ -124,24 +124,81 @@ class TradingBot:
         return new_weights
     
     # Use the weights to run the bot, and then see if it makes money or not
-    # Can override this with different scaling functions
     # Currently this is a minimiser
     def evaluate_parameters(self, weights, num_trials=5):
         # Scale the weights into something usable for the bot
         transformed_weights = self.transform_weights(weights)
 
-        # Run on different periods
-        total_balance = 0
-        for i in range(num_trials):
-            # set self.P to a random length (between 100 to 500) day period from day 0 to 1,858
-            start_index = np.random.randint(0, 1858 - 500)
-            end_index = start_index + np.random.randint(100, 500)
-            self.P = self.price_history[start_index:end_index]
+        # Walk-forward validation setup
+        total_days = 1858 # Before 2020
+        initial_train_days = 600
+        validation_fold_days = (total_days - initial_train_days) // 4  # about 300 days per fold
 
-            total_balance += self.run(transformed_weights)
+        folds = []
+        start = initial_train_days
+        for i in range(4):
+            end = min(start + validation_fold_days, total_days)
+            folds.append((start, end))
+            start = end
 
-        average_balance = total_balance / num_trials
-        return 1000 - average_balance # We minimise this
+        # Evaluate on each validation fold
+        fold_scores = []
+        for fold_start, fold_end in folds:
+            # Use cumulative training data up to this fold
+            train_end = fold_start
+            validation_data = self.price_history[fold_start:fold_end]
+
+            # Run bot on validation data
+            balance, portfolio_values = self.run_on_period(transformed_weights, validation_data)
+
+            # Compute metrics for this fold from portfolio returns
+            returns = self.compute_daily_log_returns(portfolio_values)
+            sharpe = self.compute_sharpe_ratio(returns)
+            max_dd = self.compute_max_drawdown(portfolio_values)
+
+            # Score: Sharpe minus penalty for drawdown
+            penalty = 0.1 
+            score = sharpe - penalty * max_dd
+            fold_scores.append(score)
+
+        average_score = np.mean(fold_scores)
+        return -average_score  # We minimising
+
+    def compute_daily_log_returns(self, values):
+        if len(values) < 2:
+            return np.array([0.0])
+        
+        # Ensure no non-positive values for log
+        safe_values = np.maximum(values, 1e-8)
+        returns = np.log(safe_values[1:] / safe_values[:-1])
+
+        return returns
+
+    def compute_sharpe_ratio(self, returns, risk_free_rate=0.0):
+        if len(returns) == 0 or np.std(returns) == 0:
+            return 0.0
+        
+        excess_returns = returns - risk_free_rate / 365 
+
+        return np.mean(excess_returns) / np.std(excess_returns)
+
+    def compute_max_drawdown(self, portfolio_values):
+        if len(portfolio_values) < 2:
+            return 0.0
+        
+        peak = portfolio_values[0]
+        max_dd = 0.0
+
+        for value in portfolio_values:
+            if value > peak:
+                peak = value
+
+            dd = (peak - value) / peak
+
+            if dd > max_dd:
+                max_dd = dd
+                
+        return max_dd
     
     # Override this
     def generate_signals(self, weights):
@@ -159,6 +216,8 @@ class TradingBot:
 
         signals = self.generate_signals(weights)
 
+        portfolio_values = []  # Track daily portfolio value
+
         # Move across all signals
         for i in range(len(signals)):
             signal = signals[i]
@@ -168,19 +227,25 @@ class TradingBot:
                 bitcoin = usd / self.P[i] * transaction_fee
                 usd = 0
 
-                #print(f"Buying BTC at day {i}! We now have {bitcoin} BTC")
-
             elif signal == Signal.SELL and bitcoin > 0:
                 # convert all BTC to USD
                 usd = bitcoin * self.P[i] * transaction_fee
                 bitcoin = 0
 
-                #print(f"Sellin BTC at day {i}! We now have {usd} USD")
+            # Calculate current portfolio value
+            current_value = usd + bitcoin * self.P[i]
+            portfolio_values.append(current_value)
 
         # convert any remaining BTC to USD
         if bitcoin > 0:
-            usd = bitcoin * self.P[i] * transaction_fee
+            usd = bitcoin * self.P[len(signals)-1] * transaction_fee
+            portfolio_values[-1] = usd  # Update last value
 
-        #print(f"Ending with ${usd}")
-
-        return usd
+        return usd, portfolio_values
+    
+    # Run on a specific period
+    def run_on_period(self, weights, period_data):
+        self.P = period_data
+        balance, portfolio_values = self.run(weights)
+        
+        return balance, portfolio_values
