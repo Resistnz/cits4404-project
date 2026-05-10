@@ -41,6 +41,8 @@ class BigBangBigCrunchOptimiser(Optimiser):
         """
         Generates a new point in the search space using a modified
         Gaussian distribution centered around the current best location.
+        If the deviation is fixed, the iteration number will not have
+        any influence on the deviation values.
 
         Returns:
             numpy.ndarray: The coordinates of the new point.
@@ -92,6 +94,8 @@ class BigBangBigCrunchOptimiser(Optimiser):
         It first evaluates the fitness of every point, then weights each point's
         position by its inverse fitness (mass) to find the weighted average
         location of the entire population.
+        If calculation of the center of mass is disabled, then the center of mass
+        is set to the best solution instead.
         """
         self.fitnesses = self.parallel_evaluate(self.population)
 
