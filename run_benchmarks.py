@@ -8,6 +8,7 @@ from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
 from algorithms.gwo import GWOOptimiser
 from algorithms.big_bang_big_crunch import BigBangBigCrunchOptimiser
+from algorithms.squirrel import SquirrelOptimiser, CorrectSquirrelOptimiser, ImprovedSquirrelOptimiser
 
 STARTING_CAPITAL = 1000.0
 HOLDOUT_START_INDEX = 1858
@@ -58,7 +59,8 @@ OPTIMISER_CONFIGS = [
             val_max=1,
             seed=SEED,
         ),
-    },
+    }, 
+
     # {
     #     "name": "ImprovedFireflyOptimiser",
     #     "class": ImprovedFireflyOptimiser,
@@ -96,6 +98,45 @@ OPTIMISER_CONFIGS = [
             trading_bot=bot,
             val_min=-1,
             val_max=1,
+        ),
+    },
+    {
+        "name": "SquirrelOptimiser",
+        "class": SquirrelOptimiser,
+        "factory": lambda bot, dims: SquirrelOptimiser(
+            num_squirrels=POPULATION_SIZE,
+            dimensions=dims,
+            p_predator=0.1,
+            range_min=-1,
+            range_max=1,
+            max_iterations=MAX_ITERATIONS,
+            trading_bot=bot,
+        ),
+    },
+    {
+        "name": "CorrectSquirrelOptimiser",
+        "class": CorrectSquirrelOptimiser,
+        "factory": lambda bot, dims: CorrectSquirrelOptimiser(
+            num_squirrels=POPULATION_SIZE,
+            dimensions=dims,
+            p_predator=0.1,
+            range_min=-1,
+            range_max=1,
+            max_iterations=MAX_ITERATIONS,
+            trading_bot=bot,
+        ),
+    },
+    {
+        "name": "ImprovedSquirrelOptimiser",
+        "class": ImprovedSquirrelOptimiser,
+        "factory": lambda bot, dims: ImprovedSquirrelOptimiser(
+            num_squirrels=POPULATION_SIZE,
+            dimensions=dims,
+            p_predator=0.1,
+            range_min=-1,
+            range_max=1,
+            max_iterations=MAX_ITERATIONS,
+            trading_bot=bot,
         ),
     },
 ]
