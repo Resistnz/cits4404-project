@@ -93,9 +93,7 @@ class BigBangBigCrunchOptimiser(Optimiser):
         position by its inverse fitness (mass) to find the weighted average
         location of the entire population.
         """
-        self.fitnesses = np.apply_along_axis(
-            self.objective_function, 1, self.population
-        )
+        self.fitnesses = self.parallel_evaluate(self.population)
 
         best = np.argmin(self.fitnesses)
         self.best_solution = self.population[best]

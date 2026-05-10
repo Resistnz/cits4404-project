@@ -20,10 +20,8 @@ class GWOOptimiser(Optimiser):
     def update(self):
         self.iteration += 1
 
-        # Step 1: Evaluate the fitness 
-        fitness = np.array([
-            self.objective_function(x) for x in self.population
-        ])
+        # Step 1: Evaluate the fitness in parallel
+        fitness = self.parallel_evaluate(self.population)
 
         # Step 2: Identify alpha, beta, delta wolf positions
         sorted_idx = np.argsort(fitness)
