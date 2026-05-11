@@ -1,6 +1,8 @@
 import argparse
+import csv
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 
 from bots.basic_bot import BasicBot
 from bots.more_complicated_bot import BetterBot
@@ -18,11 +20,11 @@ SAMPLE_COUNT = 20
 SEED = 80085
 
 BOT_CONFIGS = [
-    {
-        "name": "BasicBot",
-        "class": BasicBot,
-        "dimensions": 2,
-    },
+    #{
+    #    "name": "BasicBot",
+    #    "class": BasicBot,
+    #    "dimensions": 2,
+    #},
     {
         "name": "BetterBot",
         "class": BetterBot,
@@ -185,41 +187,86 @@ def run_optimizer_for_bot(bot, optimizer_config):
     }
 
 
-def run_all_benchmarks():
+def run_all_benchmarks(run_count=1, base_seed=SEED):
     results = []
+    if run_count < 1:
+        return results
 
-    for bot_config in BOT_CONFIGS:
-        bot = bot_config["class"]()
-        bot.dimensions = bot_config["dimensions"]
-        bot_name = bot_config["name"]
+    if run_count == 1:
+        seeds = [base_seed]
+    else:
+        rng = np.random.default_rng(base_seed)
+        seeds = [int(s) for s in rng.integers(0, 2**31 - 1, size=run_count)]
 
-        print("\n" + "=" * 110)
-        print(f"Benchmarking TradingBot: {bot_name}")
-        print("=" * 110)
-        print(
-            f"Shared iteration budget: {MAX_ITERATIONS} | "
-            f"Holdout start index: {HOLDOUT_START_INDEX} | "
-            f"Starting capital: ${STARTING_CAPITAL:.2f}"
-        )
-        print(
-            "Optimiser                        | Iter | Runtime   | Objective   | Profit    | Return %  | Variance"
-            "\n" + "-" * 110
-        )
+    for run_index, seed in enumerate(seeds, start=1):
+        global SEED
+        SEED = int(seed)
+        np.random.seed(SEED)
 
-        for optimizer_config in OPTIMISER_CONFIGS:
-            summary = run_optimizer_for_bot(bot, optimizer_config)
-            results.append({"bot": bot_name, **summary})
+        for bot_config in BOT_CONFIGS:
+            bot = bot_config["class"]()
+            bot.dimensions = bot_config["dimensions"]
+            bot_name = bot_config["name"]
+
+            print("\n" + "=" * 110)
+            if run_count == 1:
+                print(f"Benchmarking TradingBot: {bot_name}")
+            else:
+                print(f"Benchmarking TradingBot: {bot_name} (Run {run_index}/{run_count}, Seed {SEED})")
+            print("=" * 110)
             print(
-                f"{summary['optimiser']:30} | "
-                f"{summary['iterations']:4d} | "
-                f"{format_seconds(summary['runtime_seconds']):8} | "
-                f"{summary['objective_value']:10.4f} | "
-                f"{summary['profit']:9.2f} | "
-                f"{summary['return_percentage']:8.2f}% | "
-                f"{summary['variance']:9.6f}"
+                f"Shared iteration budget: {MAX_ITERATIONS} | "
+                f"Holdout start index: {HOLDOUT_START_INDEX} | "
+                f"Starting capital: ${STARTING_CAPITAL:.2f}"
+            )
+            print(
+                "Optimiser                        | Iter | Runtime   | Objective   | Profit    | Return %  | Variance"
+                "\n" + "-" * 110
             )
 
+            for optimizer_config in OPTIMISER_CONFIGS:
+                summary = run_optimizer_for_bot(bot, optimizer_config)
+                results.append({"bot": bot_name, "run": run_index, "seed": SEED, **summary})
+                print(
+                    f"{summary['optimiser']:30} | "
+                    f"{summary['iterations']:4d} | "
+                    f"{format_seconds(summary['runtime_seconds']):8} | "
+                    f"{summary['objective_value']:10.4f} | "
+                    f"{summary['profit']:9.2f} | "
+                    f"{summary['return_percentage']:8.2f}% | "
+                    f"{summary['variance']:9.6f}"
+                )
+
     return results
+
+
+def plot_box_whisker(results, metric, ylabel, title):
+    """Draw a grouped box-and-whisker plot of `metric` per optimiser per bot."""
+    bots = sorted(set(r["bot"] for r in results))
+    bot_count = len(bots)
+    optimisers = sorted(set(r["optimiser"] for r in results))
+
+    fig, axes = plt.subplots(1, bot_count, figsize=(7 * bot_count, 6), sharey=False)
+    if bot_count == 1:
+        axes = [axes]
+
+    for ax, bot_name in zip(axes, bots):
+        bot_results = [r for r in results if r["bot"] == bot_name]
+        data = [[r[metric] for r in bot_results if r["optimiser"] == o] for o in optimisers]
+
+        bp = ax.boxplot(data, labels=optimisers, patch_artist=True)
+        ax.set_title(f"{bot_name}")
+        ax.set_ylabel(ylabel)
+        ax.tick_params(axis="x", rotation=30)
+
+        # colour boxes
+        colors = plt.cm.tab10(np.linspace(0, 1, len(optimisers)))
+        for patch, color in zip(bp["boxes"], colors):
+            patch.set_facecolor(color)
+
+    fig.suptitle(title, fontsize=14, fontweight="bold")
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    return fig
 
 
 def parse_args():
@@ -230,6 +277,18 @@ def parse_args():
         default=MAX_ITERATIONS,
         help="Number of optimisation iterations for every optimiser.",
     )
+    parser.add_argument(
+        "--runs",
+        type=int,
+        default=1,
+        help="Number of random-seed runs to execute. Use 1 for a single run.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=SEED,
+        help="Base seed used for a single run or to generate multiple sample seeds.",
+    )
     return parser.parse_args()
 
 
@@ -238,7 +297,30 @@ def main():
     global MAX_ITERATIONS
     MAX_ITERATIONS = args.iterations
 
-    run_all_benchmarks()
+    results = run_all_benchmarks(run_count=args.runs, base_seed=args.seed)
+
+    if args.runs > 1 and results:
+        # Write CSV
+        csv_path = "benchmark_reports/benchmark_results.csv"
+        fieldnames = list(results[0].keys())
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(results)
+        print(f"\n  Saved {csv_path} ({len(results)} rows)")
+
+        # Plot
+        print("Generating box-and-whisker plot...")
+
+        fig = plot_box_whisker(
+            results,
+            metric="profit",
+            ylabel="Profit ($)",
+            title="Profit Distribution Across Runs",
+        )
+        fig.savefig("benchmark_profit_boxplot.png", dpi=150)
+        print("  Saved benchmark_profit_boxplot.png")
+        plt.show()
 
 
 if __name__ == "__main__":
