@@ -28,7 +28,7 @@ def plot_2d_window_space(bot, val_min=1, val_max=50, step=1):
             converted_x = (X[i, j] - 25) / 25
             converted_y = (Y[i, j] - 25) / 25
 
-            Z[i, j] = bot.evaluate_parameters([converted_x, converted_y])
+            Z[i, j] = bot.evaluate_parameters([converted_x, converted_y], mode="log_excess")
 
             count += 1
             if count % 50 == 0:
