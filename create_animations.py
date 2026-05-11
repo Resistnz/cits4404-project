@@ -197,7 +197,7 @@ def main():
     ax2d.legend(loc='upper right')
 
     # Hot pink agents for maximum contrast against viridis
-    scat2d = ax2d.scatter([], [], c='#FF00FF', s=100, edgecolors='white', linewidths=2.0, zorder=-5)
+    scat2d = ax2d.scatter([], [], c='#FF00FF', s=100, edgecolors='white', linewidths=2.0, zorder=5)
     title2d = ax2d.set_title("Iteration 1")
 
     for frame in range(max_iterations):
