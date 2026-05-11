@@ -6,7 +6,7 @@ from algorithms.benchmarks import functions
 
 
 class FireflyOptimiser(Optimiser):
-    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, function_key="f2", trading_bot=None, val_min=-1, val_max=1, seed=None):
+    def __init__(self, num_fireflies, dimensions, light_absorption=0.4, step_size=0.1, max_iterations=1000, function_key="f2", trading_bot=None, val_min=-1, val_max=1, seed=None):
         super().__init__(max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
 
         if seed is not None:
@@ -58,8 +58,8 @@ class FireflyOptimiser(Optimiser):
         # print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
 
 
-class ImprovedFireflyOptimiser(FireflyOptimiser):
-    def __init__(self, num_fireflies, dimensions, light_absorption=0.1, step_size=0.01, max_iterations=1000, 
+class PaperImprovedFireflyOptimiser(FireflyOptimiser):
+    def __init__(self, num_fireflies, dimensions, light_absorption=0.4, step_size=0.1, max_iterations=1000, 
                        min_brightness=0.1, w_start=0.9, w_end=0.4, theta=0.1, trading_bot=None, val_min=-1, val_max=1, seed=None):
         
         super().__init__(num_fireflies=num_fireflies, dimensions=dimensions, light_absorption=light_absorption, 
@@ -128,3 +128,69 @@ class ImprovedFireflyOptimiser(FireflyOptimiser):
         self.best_solution = self.fireflies[best]
 
         # print(f"\rIteration: {self.iteration}/{self.max_iterations}            ", end="")
+
+
+class ImprovedFireflyOptimiser(PaperImprovedFireflyOptimiser):
+    """
+    Fixed version of PaperImprovedFireflyOptimiser.
+
+    The paper's update rule (Eq. 6) applies an inertia weight `w` to the
+    full position vector:
+        x_new = w * x_old + attraction + noise
+    
+    This is incorrect — multiplying a position by w < 1 every iteration
+    causes the entire swarm to geometrically collapse toward the origin,
+    regardless of where the good solutions are.
+
+    The correct interpretation of an inertia weight is PSO-style: apply it
+    to the *movement delta* (i.e. how much the firefly would have moved),
+    not to the absolute position. The fixed update is:
+        x_new = x_old + w * (attraction + noise)
+
+    This preserves the spirit of the paper (damping movement over time)
+    without the collapse pathology.
+    """
+
+    def update(self):
+        self.iteration += 1
+
+        intensities = self.parallel_evaluate(self.fireflies)
+
+        new_fireflies = self.fireflies.copy()
+
+        # Logarithmic inertia weight (Eq. 6) — applied to the STEP, not the position
+        w = self.w_start - (self.w_start - self.w_end) * np.emath.logn(
+            self.max_iterations, self.iteration
+        )
+
+        # Dynamic step size (Eq. 7)
+        c = (
+            self.theta ** self.D
+            * self.max_iterations
+            * np.exp(-self.iteration / self.max_iterations)
+        )
+
+        for i in range(self.n):
+            move = np.zeros(self.D)
+            better_count = 0
+
+            for j in range(self.n):
+                if intensities[j] < intensities[i]:
+                    b = self.brightness(i, j)
+                    move += b * (self.fireflies[j] - self.fireflies[i])
+                    better_count += 1
+
+            if better_count > 0:
+                move /= better_count
+
+            d = np.random.uniform(-1, 1, self.D)
+            random_step = self.a * c * d
+
+            # FIX: inertia damps the total movement, position itself is not scaled
+            new_fireflies[i] = self.fireflies[i] + w * (move + random_step)
+            new_fireflies[i] = np.clip(new_fireflies[i], self.val_min, self.val_max)
+
+        self.fireflies = new_fireflies
+
+        best = np.argmin(intensities)
+        self.best_solution = self.fireflies[best]

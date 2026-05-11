@@ -220,3 +220,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 .vscode/
+pdf_text.txt
+z_landscape_log_excess.npy
