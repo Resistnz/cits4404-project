@@ -41,13 +41,21 @@ class BigBangBigCrunchOptimiser(Optimiser):
         """
         Generates a new point in the search space using a modified
         Gaussian distribution centered around the current best location.
+        If the deviation is fixed, the iteration number will not have
+        any influence on the deviation values.
 
         Returns:
             numpy.ndarray: The coordinates of the new point.
         """
+        deviation = self.val_max * np.random.normal(size=self.dimensions)
+
+        if not self.deviation_fixed:
+            deviation /= self.iteration
+
+        new_point = self.center_of_mass + deviation
+
         return np.clip(
-            self.center_of_mass
-            + (self.val_max * np.random.normal(size=self.dimensions)) / self.iteration,
+            new_point,
             self.val_min,
             self.val_max,
         )
@@ -86,8 +94,17 @@ class BigBangBigCrunchOptimiser(Optimiser):
         It first evaluates the fitness of every point, then weights each point's
         position by its inverse fitness (mass) to find the weighted average
         location of the entire population.
+        If calculation of the center of mass is disabled, then the center of mass
+        is set to the best solution instead.
         """
         self.fitnesses = self.parallel_evaluate(self.population)
+
+        best = np.argmin(self.fitnesses)
+        self.best_solution = self.population[best]
+
+        if not self.calc_center_of_mass:
+            self.center_of_mass = self.best_solution
+            return
 
         sum_of_mass = 0
         sum_of_mass_points = 0
@@ -104,8 +121,5 @@ class BigBangBigCrunchOptimiser(Optimiser):
 
         self.big_bang()
         self.big_crunch()
-
-        best = np.argmin(self.fitnesses)
-        self.best_solution = self.population[best]
 
         print(f"\rIteration: {self.iteration}/{self.max_iterations} ", end="")
