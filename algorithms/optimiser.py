@@ -6,13 +6,17 @@ import os
 # --- Module-level worker state for multiprocessing ---
 _worker_bot = None
 
-def _init_worker(bot_class_name, bot_module, price_history, train_end):
+def _init_worker(bot_class_name, bot_module, price_history, train_end, eval_mode):
     """Called once per worker process to create a local bot instance."""
     global _worker_bot
     import importlib
     mod = importlib.import_module(bot_module)
     bot_class = getattr(mod, bot_class_name)
-    _worker_bot = bot_class.__new__(bot_class)
+    
+    # Properly instantiate the bot so __init__ is called
+    _worker_bot = bot_class(eval_mode=eval_mode)
+    
+    # Overwrite price history with the shared data to be safe
     _worker_bot.price_history = price_history
     _worker_bot.P = price_history[:train_end]
 
@@ -44,7 +48,7 @@ class Optimiser:
             self._pool = ProcessPoolExecutor(
                 max_workers=num_workers,
                 initializer=_init_worker,
-                initargs=(bot_class_name, bot_module, bot.price_history, 1858),
+                initargs=(bot_class_name, bot_module, bot.price_history, 1858, bot.eval_mode),
             )
         return self._pool
 

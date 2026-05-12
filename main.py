@@ -3,6 +3,9 @@ from bots.more_complicated_bot import BetterBot
 from bots.macd_bot import MACDBot
 from bots.breakout import BreakoutBot
 from bots.mean_reversion import ZScoreBot
+from bots.reverse_macd_bot import ReverseMACDBot
+from bots.triple_sma_bot import TripleSMABot
+
 from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
 from algorithms.gwo import GWOOptimiser
@@ -11,19 +14,19 @@ from algorithms.bruteforce import BruteForce
 import numpy as np
 
 def main():
-    bot = BetterBot() # This can be any TradingBot child class
-    optimiser = FireflyOptimiser    ( # This can be any Optimiser child class
-        dimensions=14,
+    bot = ReverseMACDBot(eval_mode="profit") # This can be any TradingBot child class
+    optimiser = GWOOptimiser    ( # This can be any Optimiser child class
+        dimensions=6,
         trading_bot=bot, 
         max_iterations=50, 
         val_min=-1,
         val_max=1,
         #step_size=0.1,
         #step_size=(1/50)
-        #num_wolves=30
-        step_size=0.4,
-        num_fireflies=30,
-        light_absorption=0.4
+        num_wolves=30
+        # step_size=0.4,
+        # num_fireflies=30,
+        # light_absorption=0.4
         #seed=8008135
         )
 

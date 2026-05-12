@@ -21,11 +21,11 @@ worker_bot = None
 
 def init_worker():
     global worker_bot
-    worker_bot = BasicBot()
+    worker_bot = BasicBot(eval_mode="log_excess")
 
 def eval_point(args):
     x, y = args
-    return worker_bot.evaluate_parameters([x, y], mode="log_excess")
+    return worker_bot.evaluate_parameters([x, y])
 
 def get_z_landscape():
     cache_file = "z_landscape_log_excess.npy"
@@ -88,7 +88,7 @@ def main():
     X, Y = np.meshgrid(x, y)
     Z = get_z_landscape()
 
-    bot = BasicBot()
+    bot = BasicBot(eval_mode="log_excess")
     dimensions = 2
     max_iterations = 30
 
