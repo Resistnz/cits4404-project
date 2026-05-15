@@ -19,6 +19,7 @@ class BigBangBigCrunchOptimiser(Optimiser):
         trading_bot=None,
         val_min=-1,
         val_max=1,
+        seed=None
     ):
         super().__init__(
             max_iterations=max_iterations,
@@ -26,6 +27,9 @@ class BigBangBigCrunchOptimiser(Optimiser):
             val_min=val_min,
             val_max=val_max,
         )
+
+        if seed is not None:
+            np.random.seed(seed)
 
         self.dimensions = dimensions
         self.population_size = population_size
@@ -78,7 +82,10 @@ class BigBangBigCrunchOptimiser(Optimiser):
 
     def get_mass(self, index):
         """
-        Calculates the 'mass' associated with a point using the inverse of its fitness score.
+        Calculates the 'mass' associated with a point.
+        Since we are minimizing and fitness can be negative, we shift the 
+        fitnesses relative to the best (minimum) fitness in the population.
+        The best solution gets a shifted fitness of 0, resulting in the highest mass.
 
         Args:
             index (int): The index of the point whose mass is to be calculated.
@@ -86,7 +93,9 @@ class BigBangBigCrunchOptimiser(Optimiser):
         Returns:
             float: The mass of the specified point.
         """
-        return 1 / self.fitnesses[index]
+        best_fitness = np.min(self.fitnesses)
+        shifted_fitness = self.fitnesses[index] - best_fitness
+        return 1.0 / (shifted_fitness + 1e-5)
 
     def big_crunch(self):
         """

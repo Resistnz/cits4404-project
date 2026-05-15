@@ -9,7 +9,8 @@ class Signal(IntEnum):
 
 
 class TradingBot:
-    def __init__(self):
+    def __init__(self, eval_mode="log_excess"):
+        self.eval_mode = eval_mode
         self.load_price_history()
 
         # Everything up until 2020 for training
@@ -159,15 +160,13 @@ class TradingBot:
 
         return new_weights
 
-    def evaluate_parameters(self, weights, mode="log_excess"):
-        if mode == "profit":
+    def evaluate_parameters(self, weights):
+        if self.eval_mode == "profit":
             return self._evaluate_profit(weights)
-        elif mode == "log_excess":
+        elif self.eval_mode == "log_excess":
             return self._evaluate_log_excess(weights)
-        elif mode == "drawdown":
+        elif self.eval_mode == "drawdown":
             return self._evaluate_drawdown(weights)
-        else:
-            raise ValueError("Invalid mode. Use 'profit', 'log_excess', or 'drawdown'.")
             
     def _evaluate_drawdown(self, weights):
         transformed_weights = self.transform_weights(weights)
