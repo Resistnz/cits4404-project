@@ -6,7 +6,6 @@ from bots.basic_bot import BasicBot
 from bots.more_complicated_bot import BetterBot
 from bots.macd_bot import MACDBot
 from bots.breakout import BreakoutBot
-from bots.mean_reversion import ZScoreBot
 from bots.triple_sma_bot import TripleSMABot
 from algorithms.gradient_descent import GradientDescentOptimiser
 from algorithms.firefly import FireflyOptimiser, ImprovedFireflyOptimiser
@@ -41,11 +40,6 @@ BOT_CONFIGS = [
         "name": "BreakoutBot",
         "class": BreakoutBot,
         "dimensions": 2,
-    },
-    {
-        "name": "ZScoreBot",
-        "class": ZScoreBot,
-        "dimensions": 4,
     },
     {
         "name": "TripleSMABot",

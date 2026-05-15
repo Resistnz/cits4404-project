@@ -2,7 +2,6 @@ from bots.basic_bot import BasicBot
 from bots.more_complicated_bot import BetterBot
 from bots.macd_bot import MACDBot
 from bots.breakout import BreakoutBot
-from bots.mean_reversion import ZScoreBot
 from bots.triple_sma_bot import TripleSMABot
 
 from algorithms.gradient_descent import GradientDescentOptimiser
@@ -14,7 +13,7 @@ from algorithms.squirrel import SquirrelOptimiser, CorrectSquirrelOptimiser, Imp
 import numpy as np
 
 def main():
-    bot = BasicBot(eval_mode="profit") # This can be any TradingBot child class
+    bot = BasicBot(eval_mode="log_excess") # This can be any TradingBot child class
     optimiser = BigBangBigCrunchOptimiser    ( # This can be any Optimiser child class
         dimensions=2,
         trading_bot=bot, 
