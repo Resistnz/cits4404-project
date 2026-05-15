@@ -3,23 +3,6 @@ from bots.bot import TradingBot, Signal
 
 
 class TripleSMABot(TradingBot):
-    """
-    Triple SMA Crossover Bot.
-
-    Uses three moving averages at different frequencies (fast, mid, slow).
-    A BUY signal fires when fast crosses above mid AND mid is above slow,
-    confirming a strong uptrend. A SELL signal fires when fast crosses below mid
-    AND mid is below slow, confirming a downtrend.
-
-    This is more robust than the double crossover because both conditions must
-    align — it filters out a lot of the sideways-chop false signals.
-
-    Weights: [d_fast, d_mid, d_slow]
-      d_fast  : fast SMA window  (1–20 days)
-      d_mid   : mid  SMA window  (10–40 days)
-      d_slow  : slow SMA window  (25–80 days)
-    """
-
     def transform_weights(self, weights):
         new_weights = list(weights)
 

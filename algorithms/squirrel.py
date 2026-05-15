@@ -1,28 +1,37 @@
-from optimiser import Optimiser
+from algorithms.optimiser import Optimiser
 import numpy as np
 import math
-from benchmarks import functions, get_function_bounds
+from algorithms.benchmarks import functions
 
 class SquirrelOptimiser(Optimiser):
-    def __init__(self, num_squirrels, dimensions, p_predator = 0.1, range_min=None, range_max=None, max_iterations=1000, function_key="f2"):
-        super().__init__()
+    def __init__(self, num_squirrels, dimensions, p_predator = 0.1, val_min=None, val_max=None, max_iterations=1000, function_key="f2", trading_bot=None, seed=None):
+        super().__init__(max_iterations=max_iterations, trading_bot=trading_bot, val_min=val_min, val_max=val_max)
+        
+        if seed is not None:
+            np.random.seed(seed)
+
         self.n = num_squirrels
         self.d = dimensions
         self.p_predator = p_predator
         self.hickory_ratio = 0.25
-        if range_min is None or range_max is None:
-            range_min, range_max = get_function_bounds(function_key)
-        self.range_min = range_min
-        self.range_max = range_max
+        self.val_min = val_min
+        self.val_max = val_max
 
         self.iteration = 0
         self.max_iterations = max_iterations
 
-        self.squirrels = np.random.uniform(self.range_min, self.range_max, (self.n, self.d))
+        self.squirrels = np.random.uniform(self.val_min, self.val_max, (self.n, self.d))
 
-        self.obj_func = functions[function_key]
+        if trading_bot is None:
+            self.obj_func = functions[function_key]
+        else:
+            self.obj_func = None
+
+        
 
     def objective_function(self, weights) -> float:
+        if self.trading_bot is not None:
+            return super().objective_function(weights)
         return self.obj_func(weights)
     
     
@@ -30,7 +39,7 @@ class SquirrelOptimiser(Optimiser):
         self.iteration += 1
 
         # quality of each squirrel solution
-        fitness = np.apply_along_axis(self.objective_function, 1, self.squirrels)
+        fitness = self.parallel_evaluate(self.squirrels)
         fitness_sorted_indices = np.argsort(fitness)
 
         # sort squirrels by fitness (ascending -> best first)
@@ -67,7 +76,8 @@ class SquirrelOptimiser(Optimiser):
             self.squirrels[i] = self.update_squirrel(self.squirrels[i], target)
 
         # clip to allowed range
-        self.squirrels = np.clip(self.squirrels, self.range_min, self.range_max)
+        self.squirrels = np.clip(self.squirrels, self.val_min, self.val_max)
+        self.best_solution = self.squirrels[0]
         print(f"\rSquirrel Iteration: {self.iteration}/{self.max_iterations}            ", end="")
 
 
@@ -78,7 +88,7 @@ class SquirrelOptimiser(Optimiser):
         if r < self.p_predator:
             # run away from predator
             # relocate randomly within the search range
-            return np.random.uniform(self.range_min, self.range_max, self.d)
+            return np.random.uniform(self.val_min, self.val_max, self.d)
         else:
             # move towards target
             # stochastic glide towards the chosen target
@@ -90,23 +100,22 @@ class SquirrelOptimiser(Optimiser):
     
     def run(self):
         super().run()
-
-        #print(f"Completed {self.iteration} iterations")
-        #print(f"Best solution: {self.best_solution}")
-        #print(f"Objective value: {self.objective_function(self.squirrels[0])}")
+        self.best_solution = self.squirrels[0]
         return self.objective_function(self.squirrels[0])
 
 
 class CorrectSquirrelOptimiser(SquirrelOptimiser):
-    def __init__(self, num_squirrels, dimensions, p_predator = 0.1, range_min=None, range_max=None, max_iterations=1000, function_key="f2"):
+    def __init__(self, num_squirrels, dimensions, p_predator = 0.1, val_min=None, val_max=None, max_iterations=1000, function_key="f2", trading_bot=None, seed=None):
         super().__init__(
             num_squirrels=num_squirrels,
             dimensions=dimensions,
             p_predator=p_predator,
-            range_min=range_min,
-            range_max=range_max,
+            val_min=val_min,
+            val_max=val_max,
             max_iterations=max_iterations,
             function_key=function_key,
+            trading_bot=trading_bot,
+            seed=seed
         )
 
         # SSA Specific Constants [cite: 1]
@@ -123,6 +132,8 @@ class CorrectSquirrelOptimiser(SquirrelOptimiser):
         self.sigma = (num / den) ** (1 / self.beta)
 
     def objective_function(self, weights) -> float:
+        if self.trading_bot is not None:
+            return super().objective_function(weights)
         return self.obj_func(weights)
 
     def _get_levy(self):
@@ -136,7 +147,7 @@ class CorrectSquirrelOptimiser(SquirrelOptimiser):
         self.iteration += 1
 
         # Evaluate fitness
-        fitness = np.apply_along_axis(self.objective_function, 1, self.squirrels)
+        fitness = self.parallel_evaluate(self.squirrels)
         fitness_sorted_indices = np.argsort(fitness)
         self.squirrels = self.squirrels[fitness_sorted_indices]
 
@@ -171,10 +182,11 @@ class CorrectSquirrelOptimiser(SquirrelOptimiser):
             for i in range(1, self.n):
                 levy = self._get_levy()
                 # Relocate using Levy distribution bounds
-                self.squirrels[i] = self.range_min + levy * (self.range_max - self.range_min)
+                self.squirrels[i] = self.val_min + levy * (self.val_max - self.val_min)
 
         # Clip all squirrels to allowed bounds
-        self.squirrels = np.clip(self.squirrels, self.range_min, self.range_max)
+        self.squirrels = np.clip(self.squirrels, self.val_min, self.val_max)
+        self.best_solution = self.squirrels[0]
         
         print(f"\rCorrect Squirrel Iteration: {self.iteration}/{self.max_iterations}            ", end="")
 
@@ -192,25 +204,28 @@ class CorrectSquirrelOptimiser(SquirrelOptimiser):
             return squirrel + step
         else:
             # Random location due to predator evasion
-            return np.random.uniform(self.range_min, self.range_max, self.d)
+            return np.random.uniform(self.val_min, self.val_max, self.d)
 
     def termination_criteria_reached(self) -> bool:
         return self.iteration >= self.max_iterations
     
     def run(self):
         super().run()
+        self.best_solution = self.squirrels[0]
         return self.objective_function(self.squirrels[0])
     
 class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
-    def __init__(self, num_squirrels, dimensions, p_predator=0.1, range_min=-5.12, range_max=5.12, max_iterations=1000, function_key="f2"):
+    def __init__(self, num_squirrels, dimensions, p_predator=0.1, val_min=None, val_max=None, max_iterations=1000, function_key="f2", trading_bot=None, seed=None):
         super().__init__(
             num_squirrels=num_squirrels,
             dimensions=dimensions,
             p_predator=p_predator,
-            range_min=range_min,
-            range_max=range_max,
+            val_min=val_min,
+            val_max=val_max,
             max_iterations=max_iterations,
             function_key=function_key,
+            trading_bot=trading_bot,
+            seed=seed
         )
 
         # SSA Specific Constants
@@ -244,7 +259,7 @@ class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
         self.iteration += 1
 
         # Evaluate fitness
-        fitness = np.apply_along_axis(self.objective_function, 1, self.squirrels)
+        fitness = self.parallel_evaluate(self.squirrels)
         fitness_sorted_indices = np.argsort(fitness)
         self.squirrels = self.squirrels[fitness_sorted_indices]
 
@@ -265,13 +280,13 @@ class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
                 if r >= self.p_predator:
                     self.squirrels[i] = self.squirrels[i] + self._get_dg() * self.G_c * (hickory_nut - self.squirrels[i])
                 else:
-                    self.squirrels[i] = np.random.uniform(self.range_min, self.range_max, self.d)
+                    self.squirrels[i] = np.random.uniform(self.val_min, self.val_max, self.d)
             else:
                 # Late Stage - New Update Condition (Eq 11)
                 if r >= self.p_predator or condition_met:
                     self.squirrels[i] = self.squirrels[i] + self._get_dg() * self.G_c * (hickory_nut - self.squirrels[i])
                 else:
-                    self.squirrels[i] = np.random.uniform(self.range_min, self.range_max, self.d)
+                    self.squirrels[i] = np.random.uniform(self.val_min, self.val_max, self.d)
 
         # 2. Update normal squirrels moving towards the hickory tree
         for i in range(4, min(cutoff, self.n)):
@@ -286,13 +301,13 @@ class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
                     term3 = self.c1 * np.random.rand() * self._get_dg() * self.G_c * (hickory_nut - self.squirrels[i])
                     self.squirrels[i] = term1 + term2 + term3
                 else:
-                    self.squirrels[i] = np.random.uniform(self.range_min, self.range_max, self.d)
+                    self.squirrels[i] = np.random.uniform(self.val_min, self.val_max, self.d)
             else:
                 # Late Stage - New Update Condition (Eq 13)
                 if r >= self.p_predator or condition_met:
                     self.squirrels[i] = self.squirrels[i] + self._get_dg() * self.G_c * (hickory_nut - self.squirrels[i])
                 else:
-                    self.squirrels[i] = np.random.uniform(self.range_min, self.range_max, self.d)
+                    self.squirrels[i] = np.random.uniform(self.val_min, self.val_max, self.d)
 
         # 3. Update normal squirrels moving towards acorn trees
         for i in range(min(cutoff, self.n), self.n):
@@ -304,13 +319,13 @@ class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
                 if r >= self.p_predator:
                     self.squirrels[i] = self.w * self.squirrels[i] + self.c1 * np.random.rand() * self._get_dg() * self.G_c * (target - self.squirrels[i])
                 else:
-                    self.squirrels[i] = np.random.uniform(self.range_min, self.range_max, self.d)
+                    self.squirrels[i] = np.random.uniform(self.val_min, self.val_max, self.d)
             else:
                 # Late Stage - New Update Condition (Eq 12)
                 if r >= self.p_predator or condition_met:
                     self.squirrels[i] = self.squirrels[i] + self._get_dg() * self.G_c * (target - self.squirrels[i])
                 else:
-                    self.squirrels[i] = np.random.uniform(self.range_min, self.range_max, self.d)
+                    self.squirrels[i] = np.random.uniform(self.val_min, self.val_max, self.d)
 
         # Seasonal Monitoring Condition (Eq 6)
         self.Sc = np.sum(np.sqrt(np.sum((self.squirrels[1:4] - self.squirrels[0]) ** 2, axis=1)))
@@ -319,7 +334,7 @@ class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
         if self.Sc < self.Smin:
             for i in range(1, self.n):
                 levy = self._get_levy()
-                self.squirrels[i] = self.range_min + levy * (self.range_max - self.range_min)
+                self.squirrels[i] = self.val_min + levy * (self.val_max - self.val_min)
 
         # Adaptive Scmin Strategy (Eq 14 & 15)
         if self.iteration < 100:
@@ -330,7 +345,8 @@ class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
             self.Smin = 1e-6 / (365 ** (II / (self.max_iterations / 2.5)))
 
         # Clip all squirrels to allowed bounds
-        self.squirrels = np.clip(self.squirrels, self.range_min, self.range_max)
+        self.squirrels = np.clip(self.squirrels, self.val_min, self.val_max)
+        self.best_solution = self.squirrels[0]
         
         print(f"\rImproved Squirrel Iteration: {self.iteration}/{self.max_iterations}            ", end="")
 
@@ -339,4 +355,5 @@ class ImprovedSquirrelOptimiser(CorrectSquirrelOptimiser):
     
     def run(self):
         super().run()
+        self.best_solution = self.squirrels[0]
         return self.objective_function(self.squirrels[0])

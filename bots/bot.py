@@ -11,12 +11,10 @@ class Signal(IntEnum):
 class TradingBot:
     def __init__(self, eval_mode="log_excess"):
         self.eval_mode = eval_mode
-
         self.load_price_history()
 
         # Everything up until 2020 for training
         self.P = self.price_history[:1858]
-        
 
     def load_price_history(self):
         filepath = "data/BTC-Daily.csv"
