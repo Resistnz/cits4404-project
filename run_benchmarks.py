@@ -103,6 +103,7 @@ OPTIMISER_CONFIGS = [
             trading_bot=bot,
             val_min=-1,
             val_max=1,
+            seed=seed,
         ),
     },
     {
