@@ -34,7 +34,7 @@ BOT_CONFIGS = [
     {
         "name": "MACDBot",
         "class": MACDBot,
-        "dimensions": 2,
+        "dimensions": 3,
     },
     {
         "name": "BreakoutBot",
@@ -199,6 +199,7 @@ def run_optimizer_for_bot(bot, optimizer_config, seed):
         "iterations": MAX_ITERATIONS,
         "runtime_seconds": elapsed,
         "objective_value": objective_value,
+        "weights": str(list(transformed_solution)).replace(',', ';'),
         **holdout,
     }
 
@@ -209,7 +210,7 @@ def run_all_benchmarks(num_runs=3, output_file="benchmark_results.csv"):
     csv_columns = [
         "bot", "eval_mode", "optimiser", "run_index", "iterations", 
         "runtime_seconds", "objective_value", "final_balance", 
-        "profit", "variance", "return_percentage"
+        "profit", "variance", "return_percentage", "weights"
     ]
     
     with open(output_file, 'w', newline='') as csvfile:

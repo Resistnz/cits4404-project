@@ -1,5 +1,11 @@
 # CITS4404 Project
 
+Run benchmarks:
+
+```
+python run_benchmarks.py --iterations 50 --runs 5 --output "benchmark_results.csv"   
+```
+
 ## How does it work
 
                                 optimisation alg.
