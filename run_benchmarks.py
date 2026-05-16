@@ -200,7 +200,7 @@ def run_optimizer_for_bot(bot, optimizer_config, seed):
         "iterations": MAX_ITERATIONS,
         "runtime_seconds": elapsed,
         "objective_value": objective_value,
-        "weights": str(list(transformed_solution)).replace(',', ';'),
+        "raw_weights": str(list(best_solution)).replace(',', ';'),
         **holdout,
     }
 

@@ -167,7 +167,7 @@ class TradingBot:
             return self._evaluate_log_excess(weights)
         elif self.eval_mode == "drawdown":
             return self._evaluate_drawdown(weights)
-            
+        
     def _evaluate_drawdown(self, weights):
         transformed_weights = self.transform_weights(weights)
         
@@ -177,22 +177,25 @@ class TradingBot:
         originalP = self.P
         try:
             balance, portfolio_values, signals = self.run_on_period(transformed_weights, training_data)
+
+            # Make sure we actually trading
+            round_trips = self.count_round_trips(signals)
+            if round_trips < 4:
+                return 1e5
             
-            # 1. Calculate Log Return (Profitability)
+            # Calculate Log Return (Profitability)
             starting_capital = 1000.0
             log_return = np.log(max(balance, 1e-8) / starting_capital)
             
-            # 2. Calculate Maximum Drawdown (Risk/Volatility)
+            # Calculate Maximum Drawdown (Risk/Volatility)
             portfolio_array = np.array(portfolio_values)
             running_max = np.maximum.accumulate(portfolio_array)
             drawdowns = (running_max - portfolio_array) / running_max
             max_drawdown = np.max(drawdowns) if len(drawdowns) > 0 else 1.0
             
-            # 3. Combine them into a balanced score
-            # A heavy penalty (e.g., 3.0x) on max_drawdown forces the bot to sell before crashes.
-            # "Buy and Hold" on Bitcoin has an 85% drawdown, so it will lose 2.55 points.
-            # A smart bot will trade actively to dodge crashes and keep its drawdown low.
             score = log_return - (3.0 * max_drawdown)
+
+            
             
             # Since the optimiser is a minimiser, return the negative score
             return -score
@@ -267,6 +270,10 @@ class TradingBot:
         try:
             balance, _, _ = self.run_on_period(transformed_weights, training_data)
             
+            round_trips = self.count_round_trips(_)
+            if round_trips < 4:
+                return 1e5
+
             # The optimiser is a minimiser, so to maximise profit we return -balance
             return -balance
         finally:

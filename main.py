@@ -13,9 +13,9 @@ from algorithms.squirrel import SquirrelOptimiser, CorrectSquirrelOptimiser, Imp
 import numpy as np
 
 def main():
-    bot = BreakoutBot(eval_mode="drawdown") # This can be any TradingBot child class
+    bot = BasicBot(eval_mode="profit") # This can be any TradingBot child class
     optimiser = FireflyOptimiser    ( # This can be any Optimiser child class
-        dimensions=2,
+        dimensions=14,
         trading_bot=bot, 
         max_iterations=50, 
         val_min=-1,
