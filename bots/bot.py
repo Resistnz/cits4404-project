@@ -171,7 +171,7 @@ class TradingBot:
     def _evaluate_drawdown(self, weights):
         transformed_weights = self.transform_weights(weights)
         
-        # Evaluate on the entire training dataset at once to fix the warm-up bug
+        # Evaluate on the entire training dataset at once
         training_data = self.price_history[:1858]
         
         originalP = self.P
@@ -195,8 +195,6 @@ class TradingBot:
             
             score = log_return - (3.0 * max_drawdown)
 
-            
-            
             # Since the optimiser is a minimiser, return the negative score
             return -score
         finally:
