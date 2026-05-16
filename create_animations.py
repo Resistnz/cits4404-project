@@ -93,7 +93,7 @@ def main():
     max_iterations = 30
 
     if algo_name == "GWO":
-        opt = GWOOptimiser(num_wolves=30, dimensions=dimensions, max_iterations=max_iterations, trading_bot=bot)
+        opt = GWOOptimiser(num_wolves=30, dimensions=dimensions, max_iterations=max_iterations, trading_bot=bot, val_min=-1, val_max=1)
     elif algo_name == "Firefly":
         opt = FireflyOptimiser(num_fireflies=30, dimensions=dimensions, max_iterations=max_iterations, trading_bot=bot)
     elif algo_name == "ImprovedFirefly":
