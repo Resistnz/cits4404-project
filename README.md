@@ -1,26 +1,7 @@
 # CITS4404 Project
 
-Run benchmarks:
-
-```
-python run_benchmarks.py --iterations 50 --runs 5 --output "benchmark_results.csv"   
-```
-
 ## How does it work
-
-                                optimisation alg.
-
-                                    |
-                                    |  (weightings)
-                                    V
-    
-      trading engine   <----    weighted indicators  < ---- indicators (1-day-ema, 3-day-ema, max, min etc)
-
-            |
-            |
-            V
-
-        buy/sell
+![overview diagram](overview.png)
 
 ## Structurally
 
@@ -45,6 +26,8 @@ The language of our Optimser is just some floats, and we are simply optimising f
 
 Our main function is simple - we pick our trading bot and our optimiser, train the optimiser to get good weights for the indicators (using the amount of money made as the objective function), and then we get our `best_solution`, which we can use to trade on future data.
 
-## TLDR
+## Run benchmarks
 
-### Making an Optimiser Algorithm
+```
+python run_benchmarks.py --iterations 50 --runs 5 --output "benchmark_results.csv"   
+```
