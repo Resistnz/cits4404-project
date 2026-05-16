@@ -44,7 +44,7 @@ class TradingBot:
         return np.ones(N) / N
 
     @staticmethod
-    def wma(P, N, kernel):
+    def wma(P, N, kernel): # usage: wma(price_history, window_size, kernel)
         return np.convolve(TradingBot.pad(P, N), kernel, "valid")
 
     @staticmethod
@@ -272,9 +272,24 @@ class TradingBot:
         finally:
             self.P = originalP
     
-    # Override this
+    # Override this in child TradingBot classes
     def generate_signals(self, weights):
         signals = [Signal.HOLD] * len(self.P)
+
+        return signals
+
+    # Example of a simple buy/sell at a certain price
+    def generate_signals(self, weights): # weights = [buy_price, sell_price]
+        signals = [Signal.HOLD] * len(self.P)
+
+        buy_price = weights[0]
+        sell_price = weights[1]
+
+        for i in range(len(self.P)):
+            if self.P[i] < buy_price:
+                signals[i] = Signal.BUY
+            elif self.P[i] > sell_price:
+                signals[i] = Signal.SELL
 
         return signals
     

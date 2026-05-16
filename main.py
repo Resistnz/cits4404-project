@@ -13,8 +13,8 @@ from algorithms.squirrel import SquirrelOptimiser, CorrectSquirrelOptimiser, Imp
 import numpy as np
 
 def main():
-    bot = BasicBot(eval_mode="log_excess") # This can be any TradingBot child class
-    optimiser = BigBangBigCrunchOptimiser    ( # This can be any Optimiser child class
+    bot = BreakoutBot(eval_mode="drawdown") # This can be any TradingBot child class
+    optimiser = FireflyOptimiser    ( # This can be any Optimiser child class
         dimensions=2,
         trading_bot=bot, 
         max_iterations=50, 
@@ -24,9 +24,9 @@ def main():
         #step_size=0.1,
         #step_size=(1/50)
         #num_wolves=30
-        # step_size=0.4,
-        # num_fireflies=30,
-        # light_absorption=0.4
+        step_size=0.4,
+        num_fireflies=30,
+        light_absorption=0.4
         #seed=8008135
         )
 
